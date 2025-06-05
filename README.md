@@ -1,27 +1,34 @@
 # Climate React Plus
 
-A smart climate control logic for Home Assistant, based on external temperature sensors and any climate entity (`climate.*`).
+**Smart temperature-based climate control for Home Assistant.**
 
-**Works with:** Broadlink + SmartIR, Sensibo, Tado, or any compatible HVAC entity.
+Climate React Plus automates HVAC entities based on external or internal temperature sensors, with fine control over modes, thresholds and user preferences. It supports Broadlink + SmartIR, Sensibo, Tado, and any standard `climate.*` entity.
 
-## Features
+## 💡 Features
 
-- Automatically turns on/off the AC based on ambient temperature
-- Configurable min/max thresholds
-- Custom target temperature, HVAC mode, and fan mode
-- Supports multiple zones (rooms)
-- Local and independent — no external cloud required
-- Lovelace card for full control
+- Auto on/off based on temperature range
+- Configurable:
+  - Minimum and maximum temperature thresholds
+  - Setpoint temperature (°C or °F)
+  - HVAC mode (`cool`, `heat`, `auto`, etc.)
+  - Fan level (`auto`, `low`, `medium`, `high`)
+- Optional UI card built with Lit + TypeScript
+- Multi-zone support (bedroom, office, etc.)
+- Local-first — no cloud dependency
 
-## Installation (via HACS)
+## 🧩 Installation via HACS
 
-1. Add this repository to HACS as a custom repository (type: integration)
-2. Install `climate-react-plus`
+1. Go to HACS → Integrations → Add custom repository:
+   - URL: `https://github.com/msinhore/climate-react-plus`
+   - Category: **Integration**
+2. Install **Climate React Plus**
 3. Restart Home Assistant
 
-## Configuration
+> The UI card will be automatically available as a resource in Lovelace.
 
-Each zone is configured with:
+## ⚙️ Configuration
+
+In your `configuration.yaml` or via UI helpers, each zone uses the following entities:
 
 ```yaml
 climate_react_plus:
@@ -33,4 +40,24 @@ climate_react_plus:
     max_temp_entity: input_number.react_bedroom_temp_max
     setpoint_entity: input_number.react_bedroom_target
     mode_entity: input_select.react_bedroom_mode
-    fan_entity: input_select.react_bedroom_fan
+    fan_entity: input_select.react_bedroom_fan```
+
+## Lovelace Card
+The custom card allows full control of the climate logic per zone:
+- Toggle automation
+- Set temperature range and setpoint
+- Select mode and fan level
+- Visual feedback on current temperature
+
+To use it in a dashboard:
+
+```yaml
+type: module
+url: /local/climate-react-card/dist/climate-react-card.js
+```
+
+You can include the card using HACS → Frontend if needed.
+
+## Author
+Developed by @msinhore — MIT Licensed.
+
