@@ -12,6 +12,10 @@ from homeassistant.helpers import config_validation as cv
 from .climate_react import ClimateReactController
 from .const import DOMAIN
 
+# Importa as APIs internas para helpers
+from homeassistant.components.input_number import async_create_input_number
+from homeassistant.components.input_boolean import async_create_input_boolean
+
 _LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA = vol.Schema(
@@ -35,6 +39,7 @@ CONFIG_SCHEMA = vol.Schema(
     },
     extra=vol.ALLOW_EXTRA,
 )
+
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the Climate React Plus component."""
@@ -62,23 +67,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     zone = config[CONF_NAME]
 
     def helper_id(suffix):
-        return f"input_number.react_{zone}_{suffix}" if suffix != "enabled" else f"input_boolean.react_{zone}_enabled"
+        return f"react_{zone}_{suffix}"
 
     await _create_input_boolean(hass, helper_id("enabled"), f"Climate React {zone} Enabled")
     await _create_input_number(hass, helper_id("temp_min"), f"{zone} Temp Min", 17, 30, 0.1, config["min_temp"])
-    await hass.async_block_till_done()
     await _create_input_number(hass, helper_id("temp_max"), f"{zone} Temp Max", 17, 30, 0.1, config["max_temp"])
-    await hass.async_block_till_done()
     await _create_input_number(hass, helper_id("setpoint"), f"{zone} Setpoint", 17, 30, 1, config["setpoint"])
-    await hass.async_block_till_done()
 
     controller = ClimateReactController(hass, zone, {
         "climate_entity": config["climate_entity"],
         "temperature_sensor": config["temperature_sensor"],
-        "enabled_entity": helper_id("enabled"),
-        "min_temp_entity": helper_id("temp_min"),
-        "max_temp_entity": helper_id("temp_max"),
-        "setpoint_entity": helper_id("setpoint"),
+        "enabled_entity": f"input_boolean.{helper_id('enabled')}",
+        "min_temp_entity": f"input_number.{helper_id('temp_min')}",
+        "max_temp_entity": f"input_number.{helper_id('temp_max')}",
+        "setpoint_entity": f"input_number.{helper_id('setpoint')}",
         "mode_entity": config.get("mode_entity"),
         "fan_entity": config.get("fan_entity"),
     })
@@ -89,37 +91,37 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def _create_input_number(hass, entity_id, name, min_val, max_val, step, initial):
-    domain = "input_number"
-    conf = {
-        "name": name,
-        "initial": initial,
-        "min": min_val,
-        "max": max_val,
-        "step": step,
-        "mode": "box"
-    }
-    if entity_id in hass.states.async_entity_ids(domain):
-        _LOGGER.debug("%s already exists, skipping creation", entity_id)
-    else:
-        await hass.services.async_call(domain, "set_value", {"entity_id": entity_id, "value": initial}, blocking=True)
-        _LOGGER.debug("Configured helper %s", entity_id)
+async def _create_input_number(hass, object_id, name, min_val, max_val, step, initial):
+    if f"input_number.{object_id}" in hass.states.async_entity_ids("input_number"):
+        _LOGGER.debug("Helper %s already exists, skipping creation", object_id)
+        return
 
-async def _create_input_boolean(hass, entity_id, name):
-    domain = "input_boolean"
-    object_id = entity_id.split(".")[-1]
+    await async_create_input_number(
+        hass,
+        {
+            "name": name,
+            "initial": initial,
+            "min": min_val,
+            "max": max_val,
+            "step": step,
+            "mode": "box",
+            "unique_id": object_id,
+        }
+    )
+    _LOGGER.info("Created helper input_number.%s", object_id)
 
-    if entity_id not in hass.states.async_entity_ids(domain):
-        await hass.services.async_call(
-            domain,
-            "create",
-            {
-                "name": name,
-                "unique_id": object_id
-            },
-            blocking=True
-        )
-        _LOGGER.debug("Created helper %s", entity_id)
 
-    await hass.services.async_call(domain, "turn_on", {"entity_id": entity_id}, blocking=True)
-    _LOGGER.debug("Enabled helper %s", entity_id)
+async def _create_input_boolean(hass, object_id, name):
+    if f"input_boolean.{object_id}" in hass.states.async_entity_ids("input_boolean"):
+        _LOGGER.debug("Helper %s already exists, skipping creation", object_id)
+        return
+
+    await async_create_input_boolean(
+        hass,
+        {
+            "name": name,
+            "initial": True,
+            "unique_id": object_id,
+        }
+    )
+    _LOGGER.info("Created helper input_boolean.%s", object_id)
