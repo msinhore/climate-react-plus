@@ -14,7 +14,7 @@
     "resources": [
       {
         "type": "module",
-        "url": "/community_plugin/climate-react-card/climate-react-card/dist/climate-react-card.js"
+        "url": "/hacsfiles/climate-react-card/climate-react-card/dist/climate-react-card.js"
       }
     ]
 }
