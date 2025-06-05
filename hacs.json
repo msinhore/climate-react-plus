@@ -1,21 +1,20 @@
-{
-  "name": "Climate React Plus",
-  "description": "Smart temperature-based automation and UI card for any climate entity in Home Assistant.",
-  "domain": "climate_react_plus",
-  "source": "github",
-  "authors": ["msinhore"],
-  "country": "ALL",
-  "homeassistant": "2025.5.3",
-  "integration_type": "integration",
-  "codeowners": ["@msinhore"],
-  "iot_class": "local_polling",
-  "version": "0.1.0",
-  "release_summary": "Initial release with climate automation logic and custom Lovelace card.",
-  "resources": [
-    {
-      "type": "module",
-      "url": "/local/climate-react-card/dist/climate-react-card.js"
-    }
-  ],
-  "zip_release": true
+k{
+    "name": "Climate React Plus",
+    "description": "Smart temperature-based automation and UI card for any climate entity in Home Assistant.",
+    "domain": "climate_react_plus",
+    "source": "github",
+    "authors": ["msinhore"],
+    "country": "ALL",
+    "homeassistant": "2025.5.3",
+    "integration_type": "integration",
+    "codeowners": ["@msinhore"],
+    "iot_class": "local_polling",
+    "version": "0.1.0",
+    "release_summary": "Initial release with climate automation logic and custom Lovelace card.",
+    "resources": [
+      {
+        "type": "module",
+        "url": "/community_plugin/climate-react-card/climate-react-card/dist/climate-react-card.js"
+      }
+    ]
 }
