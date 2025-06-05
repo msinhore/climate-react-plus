@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Climate React Zone Setup",
+        "description": "Configure a new climate react zone",
+        "data": {
+          "name": "Zone name",
+          "climate_entity": "Climate entity",
+          "temperature_sensor": "Temperature sensor",
+          "enabled_entity": "Enable toggle entity",
+          "min_temp_entity": "Minimum temperature entity",
+          "max_temp_entity": "Maximum temperature entity",
+          "setpoint_entity": "Setpoint entity",
+          "mode_entity": "HVAC mode entity",
+          "fan_entity": "Fan mode entity"
+        }
+      }
+    }
+  },
+  "title": "Climate React Plus",
+  "options": {
+    "step": {
+      "init": {
+        "title": "Climate React Options"
+      }
+    }
+  }
+}
