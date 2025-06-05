@@ -38,17 +38,20 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.data.setdefault(DOMAIN, {})
     return True
 
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up integration from config entry."""
     hass.data.setdefault(DOMAIN, {})
     config = entry.data
     zone = config[CONF_NAME]
 
+    use_fahrenheit = config.get("use_fahrenheit", False)
+    unit = "°F" if use_fahrenheit else "°C"
+
     # Salva config para as plataformas acessarem
     hass.data[DOMAIN][zone] = {
         "zone": zone,
         "config": config,
+        "unit": unit,  # <-- IMPORTANTE: agora number.py pode usar isso
     }
 
     # Ativa as plataformas que conterão os helpers

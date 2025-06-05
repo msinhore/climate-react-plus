@@ -1,7 +1,6 @@
 from homeassistant.components.number import RestoreNumber
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
-from homeassistant.components.climate.const import UnitOfTemperature
 
 class ClimateReactNumber(RestoreNumber):
     def __init__(
@@ -25,7 +24,7 @@ class ClimateReactNumber(RestoreNumber):
         self._attr_native_min_value = min_value
         self._attr_native_max_value = max_value
         self._attr_native_step = step
-        self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
+        self._attr_native_unit_of_measurement = "°C"
         self._attr_entity_category = EntityCategory.CONFIG
         self._attr_native_value = initial
 
