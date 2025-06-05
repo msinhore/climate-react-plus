@@ -21,16 +21,15 @@ class ClimateReactPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="user",
-            data_schema=None,
-            data_schema_ext={
-                CONF_NAME: selector({"text": {}}),
-                "climate_entity": selector({"entity": {"domain": "climate"}}),
-                "temperature_sensor": selector({"entity": {"domain": "sensor"}}),
-                "enabled_entity": selector({"entity": {"domain": "input_boolean"}}),
-                "min_temp_entity": selector({"entity": {"domain": "input_number"}}),
-                "max_temp_entity": selector({"entity": {"domain": "input_number"}}),
-                "setpoint_entity": selector({"entity": {"domain": "input_number"}}),
-                "mode_entity": selector({"entity": {"domain": "input_select"}}),
-                "fan_entity": selector({"entity": {"domain": "input_select"}})
-            }
+            data_schema=vol.Schema({
+                vol.Required(CONF_NAME): selector({"text": {}}),
+                vol.Required("climate_entity"): selector({"entity": {"domain": "climate"}}),
+                vol.Required("temperature_sensor"): selector({"entity": {"domain": "sensor"}}),
+                vol.Optional("enabled_entity"): selector({"entity": {"domain": "input_boolean"}}),
+                vol.Optional("min_temp_entity"): selector({"entity": {"domain": "input_number"}}),
+                vol.Optional("max_temp_entity"): selector({"entity": {"domain": "input_number"}}),
+                vol.Optional("setpoint_entity"): selector({"entity": {"domain": "input_number"}}),
+                vol.Optional("mode_entity"): selector({"entity": {"domain": "input_select"}}),
+                vol.Optional("fan_entity"): selector({"entity": {"domain": "input_select"}}),
+            }),
         )
