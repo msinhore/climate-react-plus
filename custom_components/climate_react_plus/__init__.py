@@ -105,11 +105,21 @@ async def _create_input_number(hass, entity_id, name, min_val, max_val, step, in
         await hass.services.async_call(domain, "set_value", {"entity_id": entity_id, "value": initial}, blocking=True)
         _LOGGER.debug("Configured helper %s", entity_id)
 
-
 async def _create_input_boolean(hass, entity_id, name):
     domain = "input_boolean"
-    if entity_id in hass.states.async_entity_ids(domain):
-        _LOGGER.debug("%s already exists, skipping creation", entity_id)
-    else:
-        await hass.services.async_call(domain, "turn_on", {"entity_id": entity_id}, blocking=True)
-        _LOGGER.debug("Configured helper %s", entity_id)
+    object_id = entity_id.split(".")[-1]
+
+    if entity_id not in hass.states.async_entity_ids(domain):
+        await hass.services.async_call(
+            domain,
+            "create",
+            {
+                "name": name,
+                "unique_id": object_id
+            },
+            blocking=True
+        )
+        _LOGGER.debug("Created helper %s", entity_id)
+
+    await hass.services.async_call(domain, "turn_on", {"entity_id": entity_id}, blocking=True)
+    _LOGGER.debug("Enabled helper %s", entity_id)
