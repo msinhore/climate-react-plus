@@ -1,17 +1,19 @@
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.const import CONF_NAME, CONF_ENTITY_ID
+from homeassistant.const import CONF_NAME
 from homeassistant.helpers.selector import selector
-from homeassistant.helpers import entity_registry
-from homeassistant.core import callback
 
 from .const import DOMAIN
 
-STEP_USER_SELECT_SCHEMA = vol.Schema({
-    vol.Required(CONF_NAME): str,
-    vol.Required("climate_entity"): str,
-    vol.Required("temperature_sensor"): str,
-})
+STEP_USER_SELECT_SCHEMA = {
+    vol.Required(CONF_NAME): selector({"text": {}}),
+    vol.Required("climate_entity"): selector({
+        "entity": {"domain": "climate"}
+    }),
+    vol.Required("temperature_sensor"): selector({
+        "entity": {"domain": "sensor", "device_class": "temperature"}
+    }),
+}
 
 class ClimateReactPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
@@ -23,12 +25,11 @@ class ClimateReactPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is None:
             return self.async_show_form(
                 step_id="user",
-                data_schema=STEP_USER_SELECT_SCHEMA
+                data_schema=vol.Schema(STEP_USER_SELECT_SCHEMA)
             )
 
         self._data.update(user_input)
 
-        # Get supported modes from the climate entity
         climate_state = self.hass.states.get(user_input["climate_entity"])
         hvac_modes = climate_state.attributes.get("hvac_modes", [])
         fan_modes = climate_state.attributes.get("fan_modes", [])
@@ -67,4 +68,3 @@ class ClimateReactPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         self._data.update(user_input)
         return self.async_create_entry(title=self._data[CONF_NAME], data=self._data)
-
