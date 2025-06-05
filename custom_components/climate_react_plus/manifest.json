@@ -1,0 +1,13 @@
+{
+  "domain": "climate_react_plus",
+  "name": "Climate React Plus",
+  "version": "0.1.0",
+  "documentation": "https://github.com/msinhore/climate-react-plus",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": ["@msinhore"],
+  "config_flow": true,
+  "iot_class": "local_polling",
+  "homeassistant": "2025.5.3"
+
+}
