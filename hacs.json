@@ -1,11 +1,17 @@
 {
   "name": "Climate React Plus",
-  "description": "Smart temperature-based automation for any climate entity in Home Assistant.",
+  "description": "Smart temperature-based automation and UI card for any climate entity in Home Assistant.",
   "domain": "climate_react_plus",
   "source": "github",
   "authors": ["msinhore"],
   "country": "ALL",
   "homeassistant": "2025.5.3",
   "integration_type": "integration",
-  "codeowners": ["@msinhore"]
+  "codeowners": ["@msinhore"],
+  "resources": [
+    {
+      "type": "module",
+      "url": "climate-react-card/dist/climate-react-card.js"
+    }
+  ]
 }
