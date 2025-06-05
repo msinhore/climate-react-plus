@@ -49,15 +49,8 @@ class ClimateReactPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema = vol.Schema({
             vol.Required("enabled", default=True): bool,
             vol.Optional("use_fahrenheit", default=False): selector({
-                "select": {
-                    "options": [
-                        {"value": False, "label": "°C"},
-                        {"value": True, "label": "°F"}
-                    ],
-                    "mode": "dropdown"
-                }
+                "boolean": {}
             }),
-            vol.Optional("use_fahrenheit", default=False): selector({"boolean": {}})
             vol.Required("min_temp", default=20): vol.All(vol.Coerce(float), vol.Range(min=10, max=35)),
             vol.Required("max_temp", default=26): vol.All(vol.Coerce(float), vol.Range(min=10, max=35)),
             vol.Required("setpoint", default=24): vol.All(vol.Coerce(float), vol.Range(min=10, max=35)),
