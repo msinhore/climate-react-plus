@@ -2,7 +2,7 @@
 from homeassistant.components.number import NumberEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
-from homeassistant.const import TEMP_CELSIUS
+from homeassistant.components.climate.const import UnitOfTemperature
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.const import CONF_NAME
 
@@ -28,7 +28,7 @@ class ClimateReactNumber(RestoreEntity, NumberEntity):
         self._attr_native_min_value = min_val
         self._attr_native_max_value = max_val
         self._attr_native_step = step
-        self._attr_native_unit_of_measurement = TEMP_CELSIUS
+        self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
         self._attr_entity_category = EntityCategory.CONFIG
         self._attr_native_value = initial
 
