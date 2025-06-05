@@ -40,7 +40,8 @@ climate_react_plus:
     max_temp_entity: input_number.react_bedroom_temp_max
     setpoint_entity: input_number.react_bedroom_target
     mode_entity: input_select.react_bedroom_mode
-    fan_entity: input_select.react_bedroom_fan```
+    fan_entity: input_select.react_bedroom_fan
+```
 
 ## Lovelace Card
 The custom card allows full control of the climate logic per zone:
