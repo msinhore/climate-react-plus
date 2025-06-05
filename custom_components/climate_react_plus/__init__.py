@@ -1,14 +1,18 @@
 # File: custom_components/climate_react_plus/__init__.py
 
 import logging
+import voluptuous as vol
+
+from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers import config_validation as cv
-import voluptuous as vol
+from homeassistant.helpers.entity_component import async_update_entity
+from homeassistant.helpers.entity_registry import async_get as async_get_registry
 
-from .const import DOMAIN
 from .climate_react import ClimateReactController
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,38 +38,72 @@ CONFIG_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
-
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """YAML-based setup (legacy)."""
-    hass.data.setdefault(DOMAIN, {})
+    """Set up the Climate React Plus component."""
+    hass.data[DOMAIN] = {}
 
-    if DOMAIN in config:
-        zones = config[DOMAIN]
-        for zone_name, zone_config in zones.items():
-            _LOGGER.debug("YAML setup for Climate React Plus zone: %s", zone_name)
+    if DOMAIN not in config:
+        return True
 
-            controller = ClimateReactController(hass, zone_name, zone_config)
-            await controller.async_initialize()
-            hass.data[DOMAIN][zone_name] = controller
+    zones = config[DOMAIN]
+    for zone_name, zone_config in zones.items():
+        _LOGGER.debug("Setting up Climate React Plus for zone: %s", zone_name)
+
+        controller = ClimateReactController(hass, zone_name, zone_config)
+        await controller.async_initialize()
+        hass.data[DOMAIN][zone_name] = controller
 
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """UI-based setup (Config Flow)."""
-    _LOGGER.debug("Setting up Climate React Plus from UI for: %s", entry.title)
-
+    """Set up from config entry."""
+    hass.data.setdefault(DOMAIN, {})
     config = entry.data
-    controller = ClimateReactController(hass, entry.title, config)
+
+    zone = config[CONF_NAME]
+
+    def helper_id(suffix):
+        return f"input_number.react_{zone}_{suffix}" if suffix != "enabled" else f"input_boolean.react_{zone}_enabled"
+
+    await _create_input_boolean(hass, helper_id("enabled"), f"Climate React {zone} Enabled")
+    await _create_input_number(hass, helper_id("temp_min"), f"{zone} Temp Min", 17, 30, 0.1, config["min_temp"])
+    await _create_input_number(hass, helper_id("temp_max"), f"{zone} Temp Max", 17, 30, 0.1, config["max_temp"])
+    await _create_input_number(hass, helper_id("setpoint"), f"{zone} Setpoint", 17, 30, 1, config["setpoint"])
+
+    controller = ClimateReactController(hass, zone, {
+        "climate_entity": config["climate_entity"],
+        "temperature_sensor": config["temperature_sensor"],
+        "enabled_entity": helper_id("enabled"),
+        "min_temp_entity": helper_id("temp_min"),
+        "max_temp_entity": helper_id("temp_max"),
+        "setpoint_entity": helper_id("setpoint"),
+        "mode_entity": config.get("mode_entity"),
+        "fan_entity": config.get("fan_entity"),
+    })
+
     await controller.async_initialize()
+    hass.data[DOMAIN][zone] = controller
 
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = controller
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry."""
-    controller: ClimateReactController = hass.data[DOMAIN].pop(entry.entry_id, None)
-    if controller:
-        await controller.async_unload()
-    return True
+async def _create_input_number(hass, entity_id, name, min_val, max_val, step, initial):
+    domain = "input_number"
+    conf = {
+        "name": name,
+        "initial": initial,
+        "min": min_val,
+        "max": max_val,
+        "step": step,
+        "mode": "box"
+    }
+    await hass.services.async_call(domain, "set_value", {"entity_id": entity_id, "value": initial}, blocking=True)
+    _LOGGER.debug("Configured helper %s", entity_id)
+
+
+async def _create_input_boolean(hass, entity_id, name):
+    domain = "input_boolean"
+    await hass.services.async_call(domain, "turn_on", {"entity_id": entity_id}, blocking=True)
+    _LOGGER.debug("Configured helper %s", entity_id)
+
