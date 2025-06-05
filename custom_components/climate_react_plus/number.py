@@ -8,21 +8,22 @@ from homeassistant.const import CONF_NAME
 
 from .const import DOMAIN
 
-
 async def async_setup_entry(hass: HomeAssistant, entry, async_add_entities):
     zone = entry.data[CONF_NAME]
     data = hass.data[DOMAIN][zone]["config"]
 
+    use_f = data.get("use_fahrenheit", False)
+    unit = "°F" if use_f else "°C"
+
     entities = [
-        ClimateReactNumber(hass, zone, "temp_min", f"{zone} Temp Min", data["min_temp"], 17, 30, 0.1),
-        ClimateReactNumber(hass, zone, "temp_max", f"{zone} Temp Max", data["max_temp"], 17, 30, 0.1),
-        ClimateReactNumber(hass, zone, "setpoint", f"{zone} Setpoint", data["setpoint"], 17, 30, 1.0),
+        ClimateReactNumber(hass, zone, "temp_min", f"{zone} Temp Min", data["min_temp"], 17, 30, 0.1, unit),
+        ClimateReactNumber(hass, zone, "temp_max", f"{zone} Temp Max", data["max_temp"], 17, 30, 0.1, unit),
+        ClimateReactNumber(hass, zone, "setpoint", f"{zone} Setpoint", data["setpoint"], 17, 30, 1.0, unit),
     ]
     async_add_entities(entities)
 
-
 class ClimateReactNumber(RestoreEntity, NumberEntity):
-    def __init__(self, hass, zone, param, name, initial, min_val, max_val, step):
+    def __init__(self, hass, zone, param, name, initial, min_val, max_val, step, unit):
         self._attr_name = name
         self._attr_unique_id = f"climate_react_{zone}_{param}"
         self._attr_native_min_value = min_val
@@ -31,7 +32,8 @@ class ClimateReactNumber(RestoreEntity, NumberEntity):
         self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
         self._attr_entity_category = EntityCategory.CONFIG
         self._attr_native_value = initial
-
+        self._attr_native_unit_of_measurement = unit
+        
     async def async_added_to_hass(self):
         if (last := await self.async_get_last_state()) is not None:
             self._attr_native_value = float(last.state)
