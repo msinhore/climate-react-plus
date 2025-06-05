@@ -8,10 +8,14 @@
   "homeassistant": "2025.5.3",
   "integration_type": "integration",
   "codeowners": ["@msinhore"],
+  "iot_class": "local_polling",
+  "version": "0.1.0",
+  "release_summary": "Initial release with climate automation logic and custom Lovelace card.",
   "resources": [
     {
       "type": "module",
-      "url": "climate-react-card/dist/climate-react-card.js"
+      "url": "/local/climate-react-card/dist/climate-react-card.js"
     }
-  ]
+  ],
+  "zip_release": true
 }

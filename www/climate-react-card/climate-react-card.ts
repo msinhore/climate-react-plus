@@ -1,12 +1,12 @@
 // File: www/climate-react-card/climate-react-card.ts
 import { css, html, LitElement, TemplateResult } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { HomeAssistant, hasConfigOrEntityChanged } from "custom-card-helpers";
 
 @customElement("climate-react-card")
 export class ClimateReactCard extends LitElement {
-  @property() hass!: HomeAssistant;
-  @property() config: any;
+  @property({ attribute: false }) hass!: HomeAssistant;
+  @property({ attribute: false }) config: any;
 
   static getConfigElement() {
     return document.createElement("hui-generic-entity-row");
@@ -22,45 +22,47 @@ export class ClimateReactCard extends LitElement {
   }
 
   shouldUpdate(changedProps: Map<string, unknown>): boolean {
-    return hasConfigOrEntityChanged(this, changedProps);
+    return hasConfigOrEntityChanged(this, changedProps, false);
   }
 
   render(): TemplateResult {
     if (!this.hass || !this.config) return html``;
 
-    const entity = (eid: string) => this.hass.states[this.config[eid]];
-    const temp = parseFloat(entity("sensor")?.state || "0");
+    const getState = (eid: string) => this.hass.states[this.config[eid]];
+    const temp = parseFloat(getState("temperature_sensor")?.state || "0");
+    const enabledState = getState("enabled_entity")?.state === "on";
 
     return html`
       <ha-card header="${this.config.title || "Climate React"}">
         <div class="info">
-          <div class="temp">${temp.toFixed(1)}°C</div>
-          <div>${entity("enabled")?.state === "on" ? "Active" : "Off"}</div>
+          <div class="temp">${temp.toFixed(1)}°</div>
+          <div>${enabledState ? "Active" : "Off"}</div>
         </div>
         <div class="controls">
-          <button @click=${() => this._toggleEnabled()}>${entity("enabled")?.state === "on" ? "Desligar" : "Ligar"}</button>
+          <button @click=${this._toggleEnabled}>
+            ${enabledState ? "Desligar" : "Ligar"}
+          </button>
           <div class="range">
             <label>Min:</label>
-            <span>${entity("min")?.state}</span>
+            <span>${getState("min_temp_entity")?.state}</span>
             <label>Max:</label>
-            <span>${entity("max")?.state}</span>
+            <span>${getState("max_temp_entity")?.state}</span>
           </div>
           <div class="setpoint">
             <label>Setpoint:</label>
-            <span>${entity("setpoint")?.state}</span>
+            <span>${getState("setpoint_entity")?.state}</span>
           </div>
         </div>
       </ha-card>
     `;
   }
 
-  private _toggleEnabled() {
-    const enabled = this.config.enabled;
-    const state = this.hass.states[enabled]?.state;
-    this.hass.callService("input_boolean", "turn_" + (state === "on" ? "off" : "on"), {
-      entity_id: enabled,
-    });
-  }
+  private _toggleEnabled = () => {
+    const eid = this.config.enabled_entity;
+    const state = this.hass.states[eid]?.state;
+    const service = state === "on" ? "turn_off" : "turn_on";
+    this.hass.callService("switch", service, { entity_id: eid });
+  };
 
   static styles = css`
     ha-card {
@@ -88,10 +90,14 @@ export class ClimateReactCard extends LitElement {
       border-radius: 4px;
       cursor: pointer;
     }
-    .range, .setpoint {
+    .range,
+    .setpoint {
       display: flex;
       gap: 8px;
       align-items: center;
+    }
+    label {
+      font-weight: 500;
     }
   `;
 }
@@ -101,4 +107,3 @@ declare global {
     "climate-react-card": ClimateReactCard;
   }
 }
-

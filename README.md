@@ -26,7 +26,7 @@ Climate React Plus automates HVAC entities based on external or internal tempera
 
 > The UI card will be automatically available as a resource in Lovelace.
 
-## ⚙️ Configuration
+## ⚙️  Configuration
 
 In your `configuration.yaml` or via UI helpers, each zone uses the following entities:
 
