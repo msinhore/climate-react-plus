@@ -16,6 +16,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema({
     vol.Optional("fan_entity"): str,
 })
 
+@config_entries.HANDLERS.register(DOMAIN)
 class ClimateReactPlusConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 

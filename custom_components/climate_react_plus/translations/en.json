@@ -2,28 +2,26 @@
   "config": {
     "step": {
       "user": {
-        "title": "Climate React Zone Setup",
-        "description": "Configure a new climate react zone",
+        "title": "Climate React Plus - Zone Setup",
+        "description": "Configure a new zone to control your climate entity.",
         "data": {
-          "name": "Zone name",
-          "climate_entity": "Climate entity",
-          "temperature_sensor": "Temperature sensor",
-          "enabled_entity": "Enable toggle entity",
-          "min_temp_entity": "Minimum temperature entity",
-          "max_temp_entity": "Maximum temperature entity",
-          "setpoint_entity": "Setpoint entity",
-          "mode_entity": "HVAC mode entity",
-          "fan_entity": "Fan mode entity"
+          "name": "Zone Name",
+          "climate_entity": "Climate Entity",
+          "temperature_sensor": "Temperature Sensor",
+          "enabled_entity": "Enabled Entity (input_boolean)",
+          "min_temp_entity": "Minimum Temperature (input_number)",
+          "max_temp_entity": "Maximum Temperature (input_number)",
+          "setpoint_entity": "Target Temperature (input_number)",
+          "mode_entity": "HVAC Mode (input_select)",
+          "fan_entity": "Fan Mode (input_select)"
         }
       }
-    }
-  },
-  "title": "Climate React Plus",
-  "options": {
-    "step": {
-      "init": {
-        "title": "Climate React Options"
-      }
+    },
+    "error": {
+      "invalid_entry": "Invalid configuration entry."
+    },
+    "abort": {
+      "already_configured": "This zone is already configured."
     }
   }
 }

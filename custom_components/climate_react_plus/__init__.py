@@ -1,17 +1,14 @@
 # File: custom_components/climate_react_plus/__init__.py
 
 import logging
-import voluptuous as vol
-
-from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers import config_validation as cv
+import voluptuous as vol
 
+from .const import DOMAIN
 from .climate_react import ClimateReactController
-
-DOMAIN = "climate_react_plus"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,20 +34,38 @@ CONFIG_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the Climate React Plus component."""
-    hass.data[DOMAIN] = {}
+    """YAML-based setup (legacy)."""
+    hass.data.setdefault(DOMAIN, {})
 
-    if DOMAIN not in config:
-        return True
+    if DOMAIN in config:
+        zones = config[DOMAIN]
+        for zone_name, zone_config in zones.items():
+            _LOGGER.debug("YAML setup for Climate React Plus zone: %s", zone_name)
 
-    zones = config[DOMAIN]
-    for zone_name, zone_config in zones.items():
-        _LOGGER.debug("Setting up Climate React Plus for zone: %s", zone_name)
-
-        controller = ClimateReactController(hass, zone_name, zone_config)
-        await controller.async_initialize()
-        hass.data[DOMAIN][zone_name] = controller
+            controller = ClimateReactController(hass, zone_name, zone_config)
+            await controller.async_initialize()
+            hass.data[DOMAIN][zone_name] = controller
 
     return True
 
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """UI-based setup (Config Flow)."""
+    _LOGGER.debug("Setting up Climate React Plus from UI for: %s", entry.title)
+
+    config = entry.data
+    controller = ClimateReactController(hass, entry.title, config)
+    await controller.async_initialize()
+
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = controller
+    return True
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    controller: ClimateReactController = hass.data[DOMAIN].pop(entry.entry_id, None)
+    if controller:
+        await controller.async_unload()
+    return True

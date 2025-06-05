@@ -25,18 +25,20 @@ class ClimateReactController:
             _LOGGER.warning("Zone %s missing required config keys: %s", self.zone, missing)
             return
 
+        entities_to_track = [
+            self.config["temperature_sensor"],
+            self.config.get("enabled_entity"),
+            self.config.get("min_temp_entity"),
+            self.config.get("max_temp_entity"),
+            self.config.get("setpoint_entity"),
+            self.config.get("mode_entity"),
+            self.config.get("fan_entity")
+        ]
+
         self._unsub.append(
             async_track_state_change_event(
                 self.hass,
-                [
-                    self.config["temperature_sensor"],
-                    self.config.get("enabled_entity"),
-                    self.config.get("min_temp_entity"),
-                    self.config.get("max_temp_entity"),
-                    self.config.get("setpoint_entity"),
-                    self.config.get("mode_entity"),
-                    self.config.get("fan_entity")
-                ],
+                [e for e in entities_to_track if e],
                 self._handle_state_change
             )
         )
@@ -46,15 +48,14 @@ class ClimateReactController:
     @callback
     async def _handle_state_change(self, event):
         try:
-            temp = float(self.hass.states.get(self.config["temperature_sensor"]).state)
+            temp = float(self._get_state("temperature_sensor", default="0"))
             enabled = self.config.get("enabled_entity")
-            if enabled and self.hass.states.get(enabled).state != "on":
+            if enabled and self._get_state("enabled_entity") != "on":
                 _LOGGER.debug("Zone %s is disabled.", self.zone)
                 return
 
             min_temp = float(self._get_state("min_temp_entity", default="0"))
             max_temp = float(self._get_state("max_temp_entity", default="99"))
-
             climate = self.config["climate_entity"]
 
             if temp > max_temp:
@@ -91,7 +92,8 @@ class ClimateReactController:
         eid = self.config.get(key)
         if not eid:
             return default
-        return self.hass.states.get(eid).state if self.hass.states.get(eid) else default
+        state = self.hass.states.get(eid)
+        return state.state if state else default
 
     async def async_unload(self):
         for unsub in self._unsub:
