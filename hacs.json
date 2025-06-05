@@ -1,4 +1,4 @@
-k{
+{
     "name": "Climate React Plus",
     "description": "Smart temperature-based automation and UI card for any climate entity in Home Assistant.",
     "domain": "climate_react_plus",
