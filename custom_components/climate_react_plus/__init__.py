@@ -8,8 +8,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.entity_component import async_update_entity
-from homeassistant.helpers.entity_registry import async_get as async_get_registry
 
 from .climate_react import ClimateReactController
 from .const import DOMAIN
@@ -68,8 +66,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await _create_input_boolean(hass, helper_id("enabled"), f"Climate React {zone} Enabled")
     await _create_input_number(hass, helper_id("temp_min"), f"{zone} Temp Min", 17, 30, 0.1, config["min_temp"])
+    await hass.async_block_till_done()
     await _create_input_number(hass, helper_id("temp_max"), f"{zone} Temp Max", 17, 30, 0.1, config["max_temp"])
+    await hass.async_block_till_done()
     await _create_input_number(hass, helper_id("setpoint"), f"{zone} Setpoint", 17, 30, 1, config["setpoint"])
+    await hass.async_block_till_done()
 
     controller = ClimateReactController(hass, zone, {
         "climate_entity": config["climate_entity"],
@@ -98,12 +99,17 @@ async def _create_input_number(hass, entity_id, name, min_val, max_val, step, in
         "step": step,
         "mode": "box"
     }
-    await hass.services.async_call(domain, "set_value", {"entity_id": entity_id, "value": initial}, blocking=True)
-    _LOGGER.debug("Configured helper %s", entity_id)
+    if entity_id in hass.states.async_entity_ids(domain):
+        _LOGGER.debug("%s already exists, skipping creation", entity_id)
+    else:
+        await hass.services.async_call(domain, "set_value", {"entity_id": entity_id, "value": initial}, blocking=True)
+        _LOGGER.debug("Configured helper %s", entity_id)
 
 
 async def _create_input_boolean(hass, entity_id, name):
     domain = "input_boolean"
-    await hass.services.async_call(domain, "turn_on", {"entity_id": entity_id}, blocking=True)
-    _LOGGER.debug("Configured helper %s", entity_id)
-
+    if entity_id in hass.states.async_entity_ids(domain):
+        _LOGGER.debug("%s already exists, skipping creation", entity_id)
+    else:
+        await hass.services.async_call(domain, "turn_on", {"entity_id": entity_id}, blocking=True)
+        _LOGGER.debug("Configured helper %s", entity_id)
