@@ -1,20 +1,24 @@
 {
-    "name": "Climate React Plus",
-    "description": "Smart temperature-based automation and UI card for any climate entity in Home Assistant.",
-    "domain": "climate_react_plus",
-    "source": "github",
-    "authors": ["msinhore"],
-    "country": "ALL",
-    "homeassistant": "2025.5.3",
-    "integration_type": "integration",
-    "codeowners": ["@msinhore"],
-    "iot_class": "local_polling",
-    "version": "0.1.1",
-    "release_summary": "Initial release with climate automation logic and custom Lovelace card.",
-    "resources": [
-      {
-        "type": "module",
-        "url": "/hacsfiles/climate-react-card/climate-react-card/dist/climate-react-card.js"
-      }
-    ]
+  "name": "Thermo Adapt",
+  "description": "Adaptive-comfort integration (Dear & Brager) with Lovelace card for Home Assistant.",
+  "domain": "thermoadapt",
+  "source": "github",
+  "authors": ["msinhore"],
+
+  "country": "ALL",
+  "homeassistant": "2025.5.3",
+
+  "integration_type": "integration",
+  "codeowners": ["@msinhore"],
+  "iot_class": "local_polling",
+
+  "version": "0.4.0-beta",
+  "release_summary": "Adaptive Dear & Brager model, TRV support and new Lovelace card.",
+
+  "resources": [
+    {
+      "type": "module",
+      "url": "/hacsfiles/thermoadapt-card/dist/thermo-adapt-card.js"
+    }
+  ]
 }

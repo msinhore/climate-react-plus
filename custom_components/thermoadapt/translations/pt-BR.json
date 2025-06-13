@@ -1,0 +1,54 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "ThermoAdapt – Configurar Ambiente",
+        "description": "Selecione os dispositivos e sensores que pertencem a este cômodo ou zona.",
+        "data": {
+          "name":            "Nome da Zona",
+          "climate_entity":  "Ar-Condicionado (entidade climate)",
+          "trv_entity":      "Válvula de Radiador (entidade number, opcional)",
+          "temp_in":         "Sensor de Temperatura Interna",
+          "temp_out":        "Sensor de Temperatura Externa",
+          "hum_in":          "Sensor de Umidade Interna (opcional)"
+        }
+      },
+      "comfort": {
+        "title": "Parâmetros de Conforto",
+        "description": "Ajuste fino das faixas de conforto adaptativo. Você poderá alterar depois nas opções da integração.",
+        "data": {
+          "temp_min":   "Manual • Temperatura Mínima (°C)",
+          "temp_max":   "Manual • Temperatura Máxima (°C)",
+          "setpoint":   "Manual • Set-point Fixo (°C)",
+          "deadband":   "Faixa Morta (°C)",
+          "humid_max":  "Umidade Relativa Máx. (%)",
+          "heat_base":  "Set-point Base Aquecimento (°C)",
+          "k_heat":     "Inclinação Adaptativa kₕ"
+        }
+      }
+    },
+    "error": {
+      "invalid_entry": "Configuração inválida."
+    },
+    "abort": {
+      "already_configured": "Esta zona já está configurada."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "ThermoAdapt – Opções de Conforto",
+        "description": "Ajuste os parâmetros de conforto desta zona.",
+        "data": {
+          "temp_min":   "Manual • Temperatura Mínima (°C)",
+          "temp_max":   "Manual • Temperatura Máxima (°C)",
+          "setpoint":   "Manual • Set-point Fixo (°C)",
+          "deadband":   "Faixa Morta (°C)",
+          "humid_max":  "Umidade Relativa Máx. (%)",
+          "heat_base":  "Set-point Base Aquecimento (°C)",
+          "k_heat":     "Inclinação Adaptativa kₕ"
+        }
+      }
+    }
+  }
+}

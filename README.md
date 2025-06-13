@@ -1,64 +1,103 @@
-# Climate React Plus
+# ThermoAdapt – Adaptive Thermal Comfort for Home Assistant
 
-**Smart temperature-based climate control for Home Assistant.**
+**An implementation of the Dear & Brager adaptive-comfort model (1998 / 2001)**
+that keeps your rooms comfortable year-round while saving energy. Works with any
+`climate.*` (split-AC / heat-pump) and, optionally, smart TRVs.
 
-Climate React Plus automates HVAC entities based on external or internal temperature sensors, with fine control over modes, thresholds and user preferences. It supports Broadlink + SmartIR, Sensibo, Tado, and any standard `climate.*` entity.
+---
 
-## 💡 Features
+## ✨ Highlights
 
-- Auto on/off based on temperature range
-- Configurable:
-  - Minimum and maximum temperature thresholds
-  - Setpoint temperature (°C or °F)
-  - HVAC mode (`cool`, `heat`, `auto`, etc.)
-  - Fan level (`auto`, `low`, `medium`, `high`)
-- Optional UI card built with Lit + TypeScript
-- Multi-zone support (bedroom, office, etc.)
-- Local-first — no cloud dependency
+| Feature | Description |
+|---------|-------------|
+| Adaptive Set-point | Calculates a dynamic target temperature from the current outdoor condition (ASHRAE 55 / EN 16798-1). |
+| Dual Season | Cools in summer, heats with a smart TRV in winter — same logic. |
+| Dead-band & Humidity | Configurable neutral zone and max RH (auto *dry* mode). |
+| Full UI Setup | Config-Flow wizard + helper sliders/switch – **no YAML** required. |
+| Lovelace Card | Single card shows enable/adaptive toggles, live sensors and sliders. |
+| Multi-Zone | Add as many rooms as you like (each one is an HA Config-Entry). |
+| Local-first | Runs 100 % locally; no cloud calls. |
 
-## 🧩 Installation via HACS
+---
 
-1. Go to HACS → Integrations → Add custom repository:
-   - URL: `https://github.com/msinhore/climate-react-plus`
-   - Category: **Integration**
-2. Install **Climate React Plus**
-3. Restart Home Assistant
+## 🛠 Installation (HACS)
 
-> The UI card will be automatically available as a resource in Lovelace.
+1. **HACS → Integrations →** *Custom Repositories* → add:
+   ```text
+   https://github.com/msinhore/thermo-adapt
+   ```
+   *Category:* **Integration**
+2. Search & install **ThermoAdapt**.
+3. Restart Home Assistant.
+4. Add a *ThermoAdapt* zone via **Settings → Devices & Services → Add Integration**.
 
-## ⚙️  Configuration
+The Lovelace card resource (`/hacsfiles/thermoadapt-card/dist/thermo-adapt-card.js`) is
+added automatically.
 
-In your `configuration.yaml` or via UI helpers, each zone uses the following entities:
+---
+
+## ⚙️ Config-Flow Parameters
+
+| Step | Field | Notes |
+|------|-------|-------|
+| **Devices** | *Zone name* | free text (e.g. *Sala*). |
+|            | *Split-AC (climate)* | any `climate.*` entity. |
+|            | *TRV (number)* | optional smart radiator valve. |
+|            | *Indoor Temp* | sensor with `device_class: temperature`. |
+|            | *Outdoor Temp* | idem – used by adaptive model. |
+|            | *Indoor RH* | optional – triggers *dry* mode. |
+| **Comfort**| *Temp min / max* | static thresholds when adaptive OFF. |
+|            | *Set-point base* | central value for adaptive curve. |
+|            | *Dead-band* | neutral zone before switching. |
+|            | *UR max* | relative-humidity limit (%). |
+|            | *Heat base / k_heat* | coefficients for adaptive heating. |
+
+All sliders can be tweaked later via **Options** or the Lovelace card.
+
+---
+
+## 📐 Adaptive Equations
+
+```
+t_set,cool  = T_c,base  – k_cool × (T_out – T_balance)          (Dear & Brager 1998)
+T_balance   = T_c,base  – Q_int / UA_total
+
+t_set,heat  = T_h,base  + k_heat × (T_balance – T_out)          (Dear & Brager 2001)
+```
+*Defaults:*  UA = 30 W/K,  Q_int = 200 W,  k_heat = 0.18.
+
+---
+
+## 🖼 Lovelace Card
 
 ```yaml
-climate_react_plus:
-  bedroom:
-    climate_entity: climate.bedroom
-    temperature_sensor: sensor.bedroom_temperature
-    enabled_entity: input_boolean.react_bedroom_enabled
-    min_temp_entity: input_number.react_bedroom_temp_min
-    max_temp_entity: input_number.react_bedroom_temp_max
-    setpoint_entity: input_number.react_bedroom_target
-    mode_entity: input_select.react_bedroom_mode
-    fan_entity: input_select.react_bedroom_fan
+type: 'custom:thermoadapt-card'
+zone: sala
+temp_in: sensor.temperatura_sala_temperature
+temp_out: sensor.sensor_externo_temperature
+hum_in: sensor.temperatura_sala_humidity   # opcional
 ```
 
-## Lovelace Card
-The custom card allows full control of the climate logic per zone:
-- Toggle automation
-- Set temperature range and setpoint
-- Select mode and fan level
-- Visual feedback on current temperature
+Features:
+* Enable / disable control loop
+* Toggle adaptive algorithm
+* Conditional sliders (manual × adaptive)
+* Live tiles for indoor/outdoor T & RH
 
-To use it in a dashboard:
+---
 
-```yaml
-type: module
-url: /local/climate-react-card/dist/climate-react-card.js
-```
+## 🙋 FAQ
 
-You can include the card using HACS → Frontend if needed.
+* **Preciso de YAML?** Não. Toda configuração é feita na interface.
+* **Funciona com Broadlink + SmartIR?** Sim, pois exige só uma entidade
+  `climate.*`.
+* **Suporta °F?**   Ative *Use Fahrenheit* no Config-Flow.
+* **Compatível com Heat-Pump que aquece e esfria?** Sim – o modo muda
+automaticamente conforme a estação.
 
-## Author
-Developed by @msinhore — MIT Licensed.
+---
+
+## 📜 License & Author
+
+Copyright © 2025 Marcos S. ([@msinhore](https://github.com/msinhore))  ·  MIT
 

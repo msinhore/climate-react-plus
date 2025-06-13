@@ -1,0 +1,54 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "ThermoAdapt – Zone Setup",
+        "description": "Select the devices and sensors that belong to this room or area.",
+        "data": {
+          "name":            "Zone Name",
+          "climate_entity":  "Split-AC (climate entity)",
+          "trv_entity":      "Radiator Valve (number entity, optional)",
+          "temp_in":         "Indoor Temperature Sensor",
+          "temp_out":        "Outdoor Temperature Sensor",
+          "hum_in":          "Indoor Humidity Sensor (optional)"
+        }
+      },
+      "comfort": {
+        "title": "Comfort Parameters",
+        "description": "Fine-tune adaptive-comfort thresholds. You can change these later in the integration options.",
+        "data": {
+          "temp_min":   "Manual • Minimum Temperature (°C)",
+          "temp_max":   "Manual • Maximum Temperature (°C)",
+          "setpoint":   "Manual • Fixed Set-point (°C)",
+          "deadband":   "Dead-band (°C)",
+          "humid_max":  "Max Relative Humidity (%)",
+          "heat_base":  "Base Set-point Heat (°C)",
+          "k_heat":     "Adaptive Heating Slope kₕ"
+        }
+      }
+    },
+    "error": {
+      "invalid_entry": "Invalid configuration entry."
+    },
+    "abort": {
+      "already_configured": "This zone is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "ThermoAdapt – Comfort Options",
+        "description": "Adjust the comfort parameters for this zone.",
+        "data": {
+          "temp_min":   "Manual • Minimum Temperature (°C)",
+          "temp_max":   "Manual • Maximum Temperature (°C)",
+          "setpoint":   "Manual • Fixed Set-point (°C)",
+          "deadband":   "Dead-band (°C)",
+          "humid_max":  "Max Relative Humidity (%)",
+          "heat_base":  "Base Set-point Heat (°C)",
+          "k_heat":     "Adaptive Heating Slope kₕ"
+        }
+      }
+    }
+  }
+}
