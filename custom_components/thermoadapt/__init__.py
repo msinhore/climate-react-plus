@@ -5,6 +5,7 @@ from homeassistant.helpers.typing import ConfigType
 import voluptuous as vol
 from homeassistant.const import CONF_NAME
 from homeassistant.helpers import config_validation as cv
+from .helpers import ensure_helpers
 
 from .const import DOMAIN
 
@@ -94,6 +95,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     #   switch  → master enable toggle
     #   climate → adaptive logic entity (ThermoAdaptClimate)
     # ------------------------------------------------------------------
+    # Make sure any missing helpers (including the new “adaptive” boolean)
+    # are created even for zones configured *before* the slug change.
+
+    await ensure_helpers(hass, zone)
+
     await hass.config_entries.async_forward_entry_setups(
         entry, ["number", "switch", "climate"]
     )
