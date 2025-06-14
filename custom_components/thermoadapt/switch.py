@@ -45,7 +45,7 @@ class ThermoAdaptSwitch(RestoreEntity, SwitchEntity):
         self._attr_unique_id = f"thermoadapt_{zone}_{slug}"
 
         # Friendly name as displayed in the UI
-        self._attr_name = f"ThermoAdapt {zone.capitalize()} {friendly}"
+        self._attr_name = f"{zone.capitalize()} {friendly}"
 
         # Stable entity_id: switch.thermoadapt_<zone>_<slug>
         # (overrides Home Assistant's automatic id generation)

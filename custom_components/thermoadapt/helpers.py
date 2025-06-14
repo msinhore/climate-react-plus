@@ -66,15 +66,21 @@ async def ensure_helpers(hass: HomeAssistant, zone: str) -> None:
                 },
             }
 
-    # Boolean toggles ----------------------------------------------------
-    for slug in ("enabled", "adaptive"):
+    # Boolean toggles with defined default values
+    SWITCH_PARAMS = {
+        "enabled": ("ThermoAdapt Enabled", True),
+        "adaptive": ("Adaptive Mode", False),
+    }
+
+    for slug, (friendly, default) in SWITCH_PARAMS.items():
         eid = f"switch.thermoadapt_{zone}_{slug}"
         if eid not in hass.states.async_entity_ids():
             to_create[eid] = {
                 "service": "switch/create",
                 "data": {
-                    "name": f"{zone.capitalize()} {slug}",
-                    "initial": slug == "enabled",  # enabled by default
+                    "name": f"{zone.capitalize()} {friendly}",
+                    "initial": default,
+                    "entity_id": eid,
                 },
             }
 
