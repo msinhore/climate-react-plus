@@ -39,7 +39,7 @@ HELPER_SUFFIXES = [
     "heat_base",
     "k_heat",
     "enabled", 
-    "adaptative"
+    "adaptative",
 ]
 
 # Update interval for coordinator
