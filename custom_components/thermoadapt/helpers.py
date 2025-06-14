@@ -67,14 +67,14 @@ async def ensure_helpers(hass: HomeAssistant, zone: str) -> None:
             }
 
     # Boolean toggles ----------------------------------------------------
-    for slug in ("ativo", "dinamico"):
+    for slug in ("ativo", "adaptive"):
         eid = f"input_boolean.thermoadapt_{zone}_{slug}"
         if eid not in hass.states.async_entity_ids():
             to_create[eid] = {
                 "service": "input_boolean/create",
                 "data": {
                     "name": f"{zone.capitalize()} {slug}",
-                    "initial": slug == "ativo",  # enabled by default
+                    "initial": slug == "enabled",  # enabled by default
                     "entity_id": eid,
                 },
             }
