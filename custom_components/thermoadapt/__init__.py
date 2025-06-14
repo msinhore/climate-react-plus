@@ -1,22 +1,40 @@
+"""
+ThermoAdapt – Home-Assistant integration bootstrap
+==================================================
+
+• Loads legacy *configuration.yaml* (still supported, but optional).
+• Persists one **zone** per Config-Entry created via the UI wizard.
+• For each zone:
+    1. Stores its runtime dict under *hass.data[DOMAIN][zone]* so that
+       the helper platforms (number / switch) and the climate platform
+       can retrieve comfort parameters and units.
+    2. Ensures all helper entities (sliders + “adaptive” toggle) exist
+       – even if the zone was created before the helpers were renamed.
+    3. Forwards the entry to:
+         • *number*   → adaptive-comfort sliders
+         • *switch*   → master enable  (switch.thermoadapt_<zone>_enabled)
+         • *climate*  → main control loop (ThermoAdaptClimate)
+"""
+
+from __future__ import annotations
+
 import logging
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.typing import ConfigType
+from typing import Any, Final
+
 import voluptuous as vol
 from homeassistant.const import CONF_NAME
+from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers import config_validation as cv
-from .helpers import ensure_helpers
+from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN
+from .helpers import ensure_helpers
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER: Final = logging.getLogger(__name__)
 
 # -----------------------------------------------------------------------------
-# YAML configuration schema (legacy path)
-# -----------------------------------------------------------------------------
-# Users who still prefer configuration.yaml can supply entities manually.
-# In a typical setup the UI Config-Flow will be used instead, but we keep
-# this schema for backward-compatibility.
+# Legacy YAML support (optional)
 # -----------------------------------------------------------------------------
 CONFIG_SCHEMA = vol.Schema(
     {
@@ -24,26 +42,25 @@ CONFIG_SCHEMA = vol.Schema(
             {
                 cv.string: vol.Schema(
                     {
-                        # ─── entidades obrigatórias ──────────────────────────
+                        # mandatory entities ------------------------------------------------
                         vol.Required("climate_entity"): cv.entity_id,
-                        vol.Required("temp_in"):        cv.entity_id,   # sensor temperatura interna
-                        vol.Required("temp_out"):       cv.entity_id,   # sensor temperatura externa
+                        vol.Required("temp_in"): cv.entity_id,   # indoor temperature sensor
+                        vol.Required("temp_out"): cv.entity_id,  # outdoor temperature sensor
 
-                        # ─── entidades opcionais ───────────────────────────
-                        vol.Optional("hum_in"):    cv.entity_id,        # sensor UR interna
-                        vol.Optional("trv_entity"):cv.entity_id,        # válvula TRV (aquecimento)
+                        # optional entities -------------------------------------------------
+                        vol.Optional("hum_in"): cv.entity_id,    # indoor RH sensor
+                        vol.Optional("trv_entity"): cv.entity_id,  # smart TRV / radiator
 
-                        # ─── parâmetros de conforto (opcionais; se ausentes,
-                        #      defaults de const.py serão aplicados) ─────────
-                        vol.Optional("temp_min"):   vol.Coerce(float),
-                        vol.Optional("temp_max"):   vol.Coerce(float),
-                        vol.Optional("setpoint"):   vol.Coerce(float),
-                        vol.Optional("deadband"):   vol.Coerce(float),
-                        vol.Optional("humid_max"):  vol.Coerce(int),
-                        vol.Optional("heat_base"):  vol.Coerce(float),
-                        vol.Optional("k_heat"):     vol.Coerce(float),
+                        # optional comfort parameters ---------------------------------------
+                        vol.Optional("temp_min"): vol.Coerce(float),
+                        vol.Optional("temp_max"): vol.Coerce(float),
+                        vol.Optional("setpoint"): vol.Coerce(float),
+                        vol.Optional("deadband"): vol.Coerce(float),
+                        vol.Optional("humid_max"): vol.Coerce(int),
+                        vol.Optional("heat_base"): vol.Coerce(float),
+                        vol.Optional("k_heat"): vol.Coerce(float),
 
-                        # ─── flags ──────────────────────────────────────────
+                        # flags -------------------------------------------------------------
                         vol.Optional("use_fahrenheit", default=False): cv.boolean,
                     }
                 )
@@ -53,56 +70,41 @@ CONFIG_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
+# -----------------------------------------------------------------------------
+
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Legacy YAML setup. Simply bootstrap the integration namespace."""
+    """Bootstrap namespace when YAML is used."""
     hass.data.setdefault(DOMAIN, {})
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """UI-driven setup (Config-Flow).
-
-    Workflow:
-      1. Persist zone configuration so helper platforms (number/switch) can
-         access comfort parameters (T_base, dead-band, UA, Q_int, etc.).
-      2. Forward the entry to those helper platforms so they materialise
-         the sliders and toggles in HA.
-      3. Forward the entry to the *climate* platform
-         where `ThermoAdaptClimate` implements the Dear & Brager model.
-    """
+    """Handle a Config-Entry created via the UI (Config-Flow)."""
 
     hass.data.setdefault(DOMAIN, {})
 
-    cfg   = entry.data
-    zone  = cfg[CONF_NAME]
+    cfg: dict[str, Any] = entry.data
+    zone: str = cfg[CONF_NAME]
 
-    use_f = cfg.get("use_fahrenheit", False)
-    unit  = "°F" if use_f else "°C"   # helper/card display unit
+    use_fahrenheit = cfg.get("use_fahrenheit", False)
+    unit = "°F" if use_fahrenheit else "°C"  # display-only (helpers / card)
 
-    # ------------------------------------------------------------------
-    # Store runtime data for this zone so that other platform files can
-    # retrieve configuration and units without parsing the entry again.
-    # ------------------------------------------------------------------
+    # Persist runtime context for the zone so every platform can read it
     hass.data[DOMAIN][zone] = {
-        "zone":   zone,
+        "zone": zone,
         "config": cfg,
-        "unit":   unit,
+        "unit": unit,
     }
 
-    # ------------------------------------------------------------------
-    # Forward the entry to helper **and** climate platforms.
-    #   number  → sliders (dead-band, set-point…)
-    #   switch  → master enable toggle
-    #   climate → adaptive logic entity (ThermoAdaptClimate)
-    # ------------------------------------------------------------------
-    # Make sure any missing helpers (including the new “adaptive” boolean)
-    # are created even for zones configured *before* the slug change.
-
+    # Make sure sliders and the adaptive toggle exist before the platforms
+    # are loaded (covers upgrades where the slug list changed).
     await ensure_helpers(hass, zone)
 
+    # Forward entry to the helper platforms + climate logic
     await hass.config_entries.async_forward_entry_setups(
         entry, ["number", "switch", "climate"]
     )
 
+    _LOGGER.debug("ThermoAdapt zone “%s” initialised (unit %s).", zone, unit)
     return True
-
