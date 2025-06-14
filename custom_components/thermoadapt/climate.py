@@ -1,21 +1,3 @@
-"""
-ThermoAdapt – Adaptive climate controller entity
-===============================================
-
-Implements the Dear & Brager (1998 / 2001) adaptive-comfort equations for both
-cooling and heating.
-
-Equipment handled per zone
---------------------------
-• split-AC (cool_entity) ........... COOL / DRY  (always present)
-• smart TRV / radiator (trv_entity)  HEAT        (optional)
-• auxiliary heater  (aux_entity) .... extra HEAT (optional – defaults to AC if
-  it advertises hvac_mode "heat")
-
-Master switch ....................... switch.thermoadapt_<zone>_enabled
-Home-Assistant minimum version ...... 2025.5.x
-"""
-
 from __future__ import annotations
 
 import logging
@@ -35,7 +17,6 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .helpers import tset_cool, tset_heat
-from .models import ComfortParams
 from .number import PARAMS
 
 _LOGGER: Final = logging.getLogger(__name__)

@@ -1,12 +1,3 @@
-"""ThermoAdapt – helper functions centralizados
-
-Inclui:
-- Criação automática de sliders (NumberEntity)
-- Criação automática de toggles (SwitchEntity)
-- Equações de conforto adaptativo (Dear & Brager)
-- Classes `ThermoAdaptSwitch` e `ThermoAdaptNumber`
-"""
-
 from __future__ import annotations
 
 import logging
@@ -20,6 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.exceptions import ServiceNotFound
 
 from .const import DOMAIN
 
@@ -94,13 +86,19 @@ async def ensure_helpers(hass: HomeAssistant, zone: str) -> None:
                 },
             }
 
-    for eid, meta in to_create.items():
-        domain, service = meta["service"].split("/")
-        _LOGGER.debug("Creating helper %s via %s.%s", eid, domain, service)
+    for eid, info in to_create.items():
+        domain = info["service"].split("/")[0]
+        service = info["service"].split("/")[1]
+        data = info["data"]
+
         try:
-            await hass.services.async_call(domain, service, meta["data"], blocking=True)
-        except Exception as exc:
-            _LOGGER.error("Could not create helper %s: %s", eid, exc)
+            await hass.services.async_call(domain, service, data, blocking=True)
+            _LOGGER.debug("Created helper: %s", eid)
+        except ServiceNotFound:
+            _LOGGER.error(
+                "Service %s.%s not available — is the frontend running?",
+                domain, service
+            )
 
 # -----------------------------------------------------------------------------
 # Optional: entry-point for native SwitchEntity + NumberEntity support
