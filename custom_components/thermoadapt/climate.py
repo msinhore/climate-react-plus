@@ -123,6 +123,15 @@ class ThermoAdaptClimate(ClimateEntity):
                     self._zone,
                     self._cool_entity,
                 )
+        # ── advertise supported HVAC modes to HA ────────────────────
+        modes = [HVACMode.OFF, HVACMode.COOL]          # always present
+        if self._trv_entity or self._aux_entity:       # heating available
+            modes.append(HVACMode.HEAT)
+        # Optional: include HVACMode.DRY when the AC supports it.
+        if "dry" in (hass.states.get(self._cool_entity).attributes.get("hvac_modes", [])):
+            modes.append(HVACMode.DRY)
+        self._attr_hvac_modes = modes
+
 
         # ── comfort parameters (cached) ───────────────────────
         def _slider(slug: str, dflt: float) -> float:
