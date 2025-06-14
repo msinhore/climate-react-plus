@@ -17,6 +17,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .helpers import tset_cool, tset_heat
+from .models import ComfortParams
 from .number import PARAMS
 
 _LOGGER: Final = logging.getLogger(__name__)
