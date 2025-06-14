@@ -149,11 +149,11 @@ class ThermoAdaptClimate(ClimateEntity):
 
     async def async_added_to_hass(self) -> None:
         """Wire coordinator & master switch callbacks."""
-        # 1) Coordinator (temperature / set-point updates)
+        # 1) Coordinator (periodic fallback refresh)
         self.async_on_remove(
             self.coordinator.async_add_listener(self._handle_coordinator_update)
         )
-        # 2) Master enable switch — react instantly
+        # 2) Master enable switch — instant reaction
         self.async_on_remove(
             async_track_state_change(
                 self.hass,
@@ -161,6 +161,24 @@ class ThermoAdaptClimate(ClimateEntity):
                 lambda *_: self._handle_coordinator_update(),
             )
         )
+        # 3) Event-driven refresh: whenever any relevant sensor/slider changes
+        entities_to_watch = [
+            self.entry.data["temp_in"],
+            self.entry.data["temp_out"],
+            self.entry.data.get("hum_in"),
+            f"number.thermoadapt_{self._zone}_deadband",
+            f"number.thermoadapt_{self._zone}_setpoint",
+            f"number.thermoadapt_{self._zone}_heat_base",
+            f"number.thermoadapt_{self._zone}_k_heat",
+        ]
+        self.async_on_remove(
+            async_track_state_change(
+                self.hass,
+                [eid for eid in entities_to_watch if eid],
+                lambda *_: self.coordinator.async_request_refresh(),
+            )
+        )
+ 
         await self.coordinator.async_config_entry_first_refresh()
 
     # -----------------------------------------------------------
@@ -169,16 +187,21 @@ class ThermoAdaptClimate(ClimateEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Runs whenever sensors OR the enable switch change."""
+        # ── Master-switch guard ──
+        # If the supervisor switch is OFF we must:
+        #   1) Turn every controlled device OFF
+        #   2) Publish the new state immediately so the UI reflects it
+        #      (no need to evaluate temperatures, dead-band, etc.)
         
-        # ── MASTER SWITCH GUARD ───────────────────────────────
         if not self.hass.states.is_state(self._enable_switch, "on"):
-            # ➊ Supervisor switch is OFF → force every device OFF
+            # 1) Force HVAC mode to OFF (skip aux-heat)
             if self._attr_hvac_mode != HVACMode.OFF:
                 self._attr_hvac_mode = HVACMode.OFF
-                # No auxiliary heat when master is off
-                self.hass.async_create_task(self._apply_mode(self.coordinator.data, False))
+                self.hass.async_create_task(
+                    self._apply_mode(self.coordinator.data, use_aux=False)
+                )
 
-            # 2- Update HA so UI reflects the OFF state instantly
+            # 2) Write state so dashboards update right away
             self.async_write_ha_state()
             return
         # -----------------------------------------------------
