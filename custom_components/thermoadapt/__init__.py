@@ -29,7 +29,6 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN
-from .helpers import ensure_helpers
 
 _LOGGER: Final = logging.getLogger(__name__)
 
@@ -96,10 +95,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "config": cfg,
         "unit": unit,
     }
-
-    # Make sure sliders and the adaptive toggle exist before the platforms
-    # are loaded (covers upgrades where the slug list changed).
-    await ensure_helpers(hass, zone)
 
     # Forward entry to the helper platforms + climate logic
     await hass.config_entries.async_forward_entry_setups(
