@@ -41,8 +41,14 @@ class ThermoAdaptSwitch(RestoreEntity, SwitchEntity):
     _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, zone: str, slug: str, friendly: str, default: bool) -> None:
+        # ──────────────── identifiers ───────────────────────
+        # keep the stable unique_id (never shown to users)
         self._attr_unique_id = f"thermoadapt_{zone}_{slug}"
+        
+        # Friendly-name as seen in the UI
         self._attr_name = f"{zone.capitalize()} {friendly}"
+
+        # initial on/off state (restored later if available)
         self._is_on = default
 
     # Restore -----------------------------------------------------------
