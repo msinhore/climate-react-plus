@@ -1,7 +1,7 @@
 """ThermoAdapt – helper functions
 
 * Adaptive-comfort equations (Dear & Brager)
-* Utility to auto-create missing input_number / input_boolean helpers so the
+* Utility to auto-create missing number / switch helpers so the
   user can install via UI without editing YAML.
 """
 
@@ -45,16 +45,16 @@ async def ensure_helpers(hass: HomeAssistant, zone: str) -> None:
         zone: prefix used for this zone (e.g. "quarto")
     """
 
-    # Build map slug -> default & meta from PARAMS (input_number) and
+    # Build map slug -> default & meta from PARAMS (number) and
     # HELPER_SUFFIXES for booleans.
     to_create: Dict[str, Dict] = {}
 
     # Numeric sliders ---------------------------------------------------
     for slug, (_friendly, v_min, v_max, step, _uom, default) in PARAMS.items():
-        eid = f"input_number.thermoadapt_{zone}_{slug}"
+        eid = f"number.thermoadapt_{zone}_{slug}"
         if eid not in hass.states.async_entity_ids():
             to_create[eid] = {
-                "service": "input_number/create",
+                "service": "number/create",
                 "data": {
                     "name": f"{zone.capitalize()} {slug}",
                     "min": v_min,
@@ -68,10 +68,10 @@ async def ensure_helpers(hass: HomeAssistant, zone: str) -> None:
 
     # Boolean toggles ----------------------------------------------------
     for slug in ("ativo", "adaptive"):
-        eid = f"input_boolean.thermoadapt_{zone}_{slug}"
+        eid = f"switch.thermoadapt_{zone}_{slug}"
         if eid not in hass.states.async_entity_ids():
             to_create[eid] = {
-                "service": "input_boolean/create",
+                "service": "switch/create",
                 "data": {
                     "name": f"{zone.capitalize()} {slug}",
                     "initial": slug == "enabled",  # enabled by default

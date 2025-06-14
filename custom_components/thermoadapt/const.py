@@ -29,7 +29,7 @@ DEF_HUMID_MAX:  int   = 65    # %  – triggers *dry* mode above this
 DEF_HEAT_BASE:  float = 20.5  # °C – T_base for heating curve
 DEF_K_HEAT:     float = 0.18  # slope for adaptive heating (Dear & Brager 2001)
 
-# Helper suffixes used to auto-generate input_numbers / booleans
+# Helper suffixes used to auto-generate numbers / switches
 HELPER_SUFFIXES = [
     "temp_min",
     "temp_max",

@@ -5,7 +5,7 @@ Collects:
   • Zone name, sensors, AC (and optional TRV)
   • Comfort parameters (min/max T, dead-band, etc.)
 Stores comfort sliders in *entry.options* so they are editable later.  Helpers
-(input_number / input_boolean) are created on-the-fly via `ensure_helpers()`.
+(number / switch) are created on-the-fly via `ensure_helpers()`.
 """
 
 from __future__ import annotations
