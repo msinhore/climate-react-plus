@@ -11,7 +11,6 @@ from __future__ import annotations
 # Core identifiers
 # -----------------------------------------------------------------------------
 DOMAIN: str = "thermoadapt"
-LEGACY_DOMAIN: str = "climate_react_plus"  # ← kept for one release cycle
 
 # Config-flow keys (UI)
 CONF_TEMP_IN:        str = "temp_in"
@@ -38,10 +37,9 @@ HELPER_SUFFIXES = [
     "humid_max",
     "heat_base",
     "k_heat",
-    "enabled", 
     "adaptative",
+    "enabled", 
 ]
 
 # Update interval for coordinator
 SCAN_INTERVAL_SEC: int = 30
-

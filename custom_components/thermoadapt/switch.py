@@ -1,8 +1,7 @@
 # custom_components/thermoadapt/switch.py
 """ThermoAdapt – two configuration switches per zone.
-
-•  <zone> ThermoAdapt Enabled   – master on/off
-•  <zone> Adaptive Mode         – toggle adaptive vs. manual set-points
+*  <zone> ThermoAdapt Enabled   – master on/off
+*  <zone> Adaptive Mode         – toggle adaptive vs. manual set-points
 """
 
 from __future__ import annotations
