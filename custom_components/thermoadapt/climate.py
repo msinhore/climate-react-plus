@@ -42,7 +42,8 @@ _LOGGER: Final = logging.getLogger(__name__)
 
 SCAN_INTERVAL: Final = timedelta(seconds=30)
 AUX_MARGIN: Final = 1.0  # °C below set-point that triggers auxiliary heat
-
+# Extra margin below set-point that activates the split-AC as auxiliary heat
+# when a dedicated radiator/TRV cannot keep up.
 
 # ───────────────────────────────────────────────────────────────
 # COORDINATOR – computes the adaptive set-point
@@ -117,6 +118,11 @@ class ThermoAdaptClimate(ClimateEntity):
             st = hass.states.get(self._cool_entity)
             if st and "heat" in st.attributes.get("hvac_modes", []):
                 self._aux_entity = self._cool_entity
+                _LOGGER.debug(
+                    "[%s] Using %s as auxiliary heater (heat-capable AC)",
+                    self._zone,
+                    self._cool_entity,
+                )
 
         # ── comfort parameters (cached) ───────────────────────
         def _slider(slug: str, dflt: float) -> float:
@@ -163,14 +169,16 @@ class ThermoAdaptClimate(ClimateEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Runs whenever sensors OR the enable switch change."""
-
+        
         # ── MASTER SWITCH GUARD ───────────────────────────────
-        if self.hass.states.is_state(self._enable_switch, "off"):
+        if not self.hass.states.is_state(self._enable_switch, "on"):
+            # ➊ Supervisor switch is OFF → force every device OFF
             if self._attr_hvac_mode != HVACMode.OFF:
                 self._attr_hvac_mode = HVACMode.OFF
-                self.hass.async_create_task(
-                    self._apply_mode(self.coordinator.data, use_aux=False)
-                )
+                # No auxiliary heat when master is off
+                self.hass.async_create_task(self._apply_mode(self.coordinator.data, False))
+
+            # 2- Update HA so UI reflects the OFF state instantly
             self.async_write_ha_state()
             return
         # -----------------------------------------------------
@@ -205,6 +213,7 @@ class ThermoAdaptClimate(ClimateEntity):
         if self._attr_hvac_mode != previous_mode or use_aux:
             self.hass.async_create_task(self._apply_mode(sp, use_aux))
 
+        # reflect new state to HA UI
         self.async_write_ha_state()
 
     # -----------------------------------------------------------
@@ -292,6 +301,8 @@ def _load_params_from_helpers(hass: HomeAssistant, zone: str) -> ComfortParams:
         deadband_cool=f("deadband", PARAMS["deadband"][-1]),
         deadband_heat=f("deadband", PARAMS["deadband"][-1]),
         humid_max=int(f("humid_max", PARAMS["humid_max"][-1])),
+        ua_total   = f("ua_total", PARAMS["ua_total"][-1]),
+        q_int      = f("q_int",    PARAMS["q_int"][-1]),
     )
 
 
