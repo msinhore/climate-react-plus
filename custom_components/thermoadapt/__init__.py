@@ -1,21 +1,3 @@
-"""
-ThermoAdapt – Home-Assistant integration bootstrap
-==================================================
-
-• Loads legacy *configuration.yaml* (still supported, but optional).
-• Persists one **zone** per Config-Entry created via the UI wizard.
-• For each zone:
-    1. Stores its runtime dict under *hass.data[DOMAIN][zone]* so that
-       the helper platforms (number / switch) and the climate platform
-       can retrieve comfort parameters and units.
-    2. Ensures all helper entities (sliders + “adaptive” toggle) exist
-       – even if the zone was created before the helpers were renamed.
-    3. Forwards the entry to:
-         • *number*   → adaptive-comfort sliders
-         • *switch*   → master enable  (switch.thermoadapt_<zone>_enabled)
-         • *climate*  → main control loop (ThermoAdaptClimate)
-"""
-
 from __future__ import annotations
 
 import logging
@@ -29,6 +11,8 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN
+from .helpers import ensure_helpers
+
 
 _LOGGER: Final = logging.getLogger(__name__)
 
@@ -96,10 +80,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "unit": unit,
     }
 
-    # Forward entry to the helper platforms + climate logic
-    await hass.config_entries.async_forward_entry_setups(
-        entry, ["number", "switch", "climate"]
-    )
-
+    await ensure_helpers(hass, zone)
+    await hass.config_entries.async_forward_entry_setups(entry, ["climate"])
+    
     _LOGGER.debug("ThermoAdapt zone “%s” initialised (unit %s).", zone, unit)
     return True

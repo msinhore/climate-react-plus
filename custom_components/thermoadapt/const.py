@@ -37,9 +37,19 @@ HELPER_SUFFIXES = [
     "humid_max",
     "heat_base",
     "k_heat",
-    "adaptative",
+    "adaptive",
     "enabled", 
 ]
 
 # Update interval for coordinator
 SCAN_INTERVAL_SEC: int = 30
+
+DEFAULTS: dict[str, float | int] = {
+    "temp_min":   DEF_TEMP_MIN,
+    "temp_max":   DEF_TEMP_MAX,
+    "setpoint":   DEF_SETPOINT,
+    "deadband":   DEF_DEADBAND,
+    "humid_max":  DEF_HUMID_MAX,
+    "heat_base":  DEF_HEAT_BASE,
+    "k_heat":     DEF_K_HEAT,
+}

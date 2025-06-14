@@ -198,10 +198,8 @@ class ThermoAdaptClimate(ClimateEntity):
             self.entry.data["temp_in"],
             self.entry.data["temp_out"],
             self.entry.data.get("hum_in"),
-            f"number.thermoadapt_{self._zone}_deadband",
-            f"number.thermoadapt_{self._zone}_setpoint",
-            f"number.thermoadapt_{self._zone}_heat_base",
-            f"number.thermoadapt_{self._zone}_k_heat",
+        ] + [
+            f"number.thermoadapt_{self._zone}_{slug}" for slug in PARAMS.keys()
         ]
         self.async_on_remove(
             async_track_state_change(

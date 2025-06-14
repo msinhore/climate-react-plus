@@ -11,7 +11,7 @@ Stores comfort sliders in *entry.options* so they are editable later.  Helpers
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Final
 
 import voluptuous as vol
 from homeassistant import config_entries
@@ -35,7 +35,7 @@ _LOGGER = logging.getLogger(__name__)
 # -----------------------------------------------------------------------------
 # DEFAULTS – hard-coded here to avoid extra imports/deps
 # -----------------------------------------------------------------------------
-DEFAULTS: Dict[str, float | int] = {
+DEFAULTS: Final[dict[str, float | int]] = {
     "temp_min":   23.0,
     "temp_max":   27.0,
     "setpoint":   25.0,
@@ -96,8 +96,8 @@ class ThermoAdaptConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is None:
             # Build a schema dynamically from DEFAULTS so adding fields later is trivial
             schema_dict: Dict[Any, Any] = {
-                vol.Required(fid, default=DEFAULTS[fid]): vol.All(vol.Coerce(float)) if "humid" not in fid else vol.All(vol.Coerce(int))
-                for fid in HELPER_SUFFIXES if fid in DEFAULTS
+                vol.Required(fid, default=DEFAULTS[fid]): vol.All(vol.Coerce(int)) if fid == "humid_max" else vol.All(vol.Coerce(float))
+                for fid in DEFAULTS
             }
             return self.async_show_form(step_id="comfort", data_schema=vol.Schema(schema_dict))
 
@@ -124,10 +124,10 @@ class ThermoAdaptOptionsFlow(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input: Dict[str, Any] | None = None):
         if user_input is None:
-            current = {k: self.entry.options.get(k, DEFAULTS.get(k)) for k in HELPER_SUFFIXES}
+            current = {k: self.entry.options.get(k, DEFAULTS[k]) for k in DEFAULTS}
             schema_dict: Dict[Any, Any] = {
-                vol.Required(fid, default=current[fid]): vol.All(vol.Coerce(float)) if "humid" not in fid else vol.All(vol.Coerce(int))
-                for fid in HELPER_SUFFIXES if fid in DEFAULTS
+                vol.Required(fid, default=current[fid]): vol.All(vol.Coerce(int)) if fid == "humid_max" else vol.All(vol.Coerce(float))
+                for fid in DEFAULTS
             }
             return self.async_show_form(step_id="init", data_schema=vol.Schema(schema_dict))
 
