@@ -57,14 +57,32 @@ class ThermoAdaptConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     # ------------------------------------------------------------------
     async def async_step_user(self, user_input: Dict[str, Any] | None = None):
         if user_input is None:
-            schema = vol.Schema({
-                vol.Required(CONF_NAME): selector({"text": {}}),
-                vol.Required(CONF_CLIMATE_ENTITY): selector({"entity": {"domain": "climate"}}),
-                vol.Optional(CONF_TRV_ENTITY, default=""): selector({"entity": {"domain": "number"}}),
-                vol.Required(CONF_TEMP_IN): selector({"entity": {"domain": "sensor", "device_class": "temperature"}}),
-                vol.Required(CONF_TEMP_OUT): selector({"entity": {"domain": "sensor", "device_class": "temperature"}}),
-                vol.Optional(CONF_HUM_IN, default=""): selector({"entity": {"domain": "sensor", "device_class": "humidity"}}),
-            })
+            schema = vol.Schema(
+                {
+                    vol.Required(CONF_NAME): selector({"text": {}}),
+                    
+                    # Split-AC (mandatory)
+                    vol.Required(CONF_CLIMATE_ENTITY): selector(
+                        {"entity": {"domain": "climate"}}
+                    ),
+
+                    # Radiador / TRV (optional)
+                    vol.Optional(CONF_TRV_ENTITY): selector(
+                        {"entity": {"domain": "climate"}}
+                    ),
+                    
+                    # Sensors
+                    vol.Required(CONF_TEMP_IN): selector(
+                        {"entity": {"domain": "sensor", "device_class": "temperature"}}
+                    ),
+                    vol.Required(CONF_TEMP_OUT): selector(
+                        {"entity": {"domain": "sensor", "device_class": "temperature"}}
+                    ),
+                    vol.Optional(CONF_HUM_IN): selector(
+                        {"entity": {"domain": "sensor", "device_class": "humidity"}}
+                    ),
+                }
+            )
             return self.async_show_form(step_id="user", data_schema=schema)
 
         # Store and move on
