@@ -75,7 +75,6 @@ async def ensure_helpers(hass: HomeAssistant, zone: str) -> None:
                 "data": {
                     "name": f"{zone.capitalize()} {slug}",
                     "initial": slug == "enabled",  # enabled by default
-                    "entity_id": eid,
                 },
             }
 
