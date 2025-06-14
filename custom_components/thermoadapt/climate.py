@@ -67,8 +67,31 @@ class ThermoAdaptCoordinator(DataUpdateCoordinator[float]):
         self.params = params
 
     async def _async_update_data(self) -> float:  # type: ignore[override]
-        """Executed by the coordinator — do NOT call directly."""
-        t_out = float(self.hass.states.get(self.entry.data["temp_out"]).state)
+        """Executed by the coordinator — do NOT call directly.
+        Returns a *fallback* set-point when the outdoor-temperature sensor
+        is still ``unknown`` during Home-Assistant start-up so that the
+        ThermoAdapt entity can be created immediately.
+        """
+
+        # ── Outdoor temperature (robust fetch) ─────────────────────────
+        st = self.hass.states.get(self.entry.data["temp_out"])
+        try:
+            t_out: float | None = (
+                float(st.state)
+                if st and st.state not in ("unknown", "unavailable")
+                else None
+            )
+        except ValueError:
+            t_out = None
+
+        # Sensor not ready yet -> return base cooling set-point and retry
+        if t_out is None:
+            _LOGGER.warning(
+                "[%s] Outdoor temperature sensor unavailable; "
+                "using fallback set-point until sensor recovers",
+                self.entry.data[CONF_NAME],
+            )
+            return round(self.params.tc_base, 1)
 
         # Cooling curve above the balance point, heating curve otherwise
         sp = (
