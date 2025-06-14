@@ -38,8 +38,8 @@ HELPER_SUFFIXES = [
     "humid_max",
     "heat_base",
     "k_heat",
-    "ativo",     # master enable (switch)
-    "dinamico",  # adaptive algorithm toggle
+    "enabled", 
+    "adaptative"
 ]
 
 # Update interval for coordinator
