@@ -60,6 +60,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.data.setdefault(DOMAIN, {})
     return True
 
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Handle a Config-Entry created via the UI (Config-Flow)."""
 
@@ -77,11 +78,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "unit": unit,
     }
 
-    # Ajuste para configuração consolidada
-    await hass.config_entries.async_forward_entry_setups(entry, ["climate"])
-
-    # Entidades configuradas diretamente via função única
-    await async_setup_entry_all(hass, entry, hass.data[DOMAIN].setdefault("async_add_entities", lambda x: None))
+    # Ajuste para configuração consolidada.
+    await hass.config_entries.async_forward_entry_setups(entry, ["climate", "number", "switch"])
 
     _LOGGER.debug("ThermoAdapt zone “%s” initialised (unit %s).", zone, unit)
     return True
