@@ -165,3 +165,18 @@ class ThermoAdaptSwitch(RestoreEntity, SwitchEntity):
     async def async_turn_off(self, **kwargs: Any) -> None:
         self._is_on = False
         self.async_write_ha_state()
+
+PLATFORM = __name__.rsplit(".", 1)[-1]  # Detects 'number' or 'switch'
+
+async def async_setup_entry(
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Dispatcher for platform setup."""
+    if PLATFORM == "number":
+        await async_setup_entry_numbers(hass, entry, async_add_entities)
+    elif PLATFORM == "switch":
+        await async_setup_entry_switches(hass, entry, async_add_entities)
+    else:
+        _LOGGER.error("ThermoAdapt: unsupported platform '%s'", PLATFORM)

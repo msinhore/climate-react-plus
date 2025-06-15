@@ -1,12 +1,13 @@
 {
-  "domain": "thermoadapt",
-  "name": "ThermoAdapt",
-  "version": "0.4.0-beta",
-  "documentation": "https://github.com/msinhore/thermo-adapt",
-  "requirements": [],
-  "dependencies": [],
-  "codeowners": ["@msinhore"],
-  "config_flow": true,
-  "iot_class": "local_polling",
-  "homeassistant": "2025.5.3"
+    "domain": "thermoadapt",
+    "name": "ThermoAdapt",
+    "version": "0.4.0-beta",
+    "documentation": "https://github.com/msinhore/thermo-adapt",
+    "requirements": [],
+    "dependencies": [],
+    "codeowners": ["@msinhore"],
+    "config_flow": true,
+    "iot_class": "local_polling",
+    "homeassistant": "2025.5.3",
+    "supported_platforms": ["climate", "number", "switch"]
 }

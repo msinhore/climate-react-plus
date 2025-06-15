@@ -79,12 +79,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "unit": unit,
     }
 
-    # Setup entities for adaptive control
-    await async_setup_entry_numbers(hass, entry)
-    await async_setup_entry_switches(hass, entry)
-
-    # Setup climate platform
-    await hass.config_entries.async_forward_entry_setups(entry, ["climate"])
+    # Setup all platforms (number, switch, climate)
+    await hass.config_entries.async_forward_entry_setups(entry, ["climate", "number", "switch"])
 
     _LOGGER.debug("ThermoAdapt zone “%s” initialised (unit %s).", zone, unit)
     return True
