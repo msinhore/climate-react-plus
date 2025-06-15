@@ -11,7 +11,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN
-rom .entities import async_setup_entry_all
+from .entities import async_setup_entry_all
 
 _LOGGER: Final = logging.getLogger(__name__)
 
