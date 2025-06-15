@@ -11,8 +11,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN
-from .helpers import ensure_helpers
-
+from .entities import async_setup_entry_numbers, async_setup_entry_switches
 
 _LOGGER: Final = logging.getLogger(__name__)
 
@@ -80,8 +79,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "unit": unit,
     }
 
-    await ensure_helpers(hass, zone)
+    # Setup entities for adaptive control
+    await async_setup_entry_numbers(hass, entry)
+    await async_setup_entry_switches(hass, entry)
+
+    # Setup climate platform
     await hass.config_entries.async_forward_entry_setups(entry, ["climate"])
-    
+
     _LOGGER.debug("ThermoAdapt zone “%s” initialised (unit %s).", zone, unit)
     return True

@@ -1,252 +1,153 @@
-// File: www/thermoadapt-card/thermoadapt-card.ts
-// A LitElement custom-card that replicates the UI shown in the screenshots
-// (enable switch, adaptive toggle, conditional blocks for dynamic vs manual
-// parameters and read-only tiles for temperatures / humidity).
-//
-// Works with the entity naming convention used by the ThermoAdapt integration:
-//   switch.thermoadapt_<zone>_enabled
-//   input_boolean.thermoadapt_<zone>_dinamico
-//   number.thermoadapt_<zone>_temp_min / _temp_max / _setpoint …
-//   sensor.<your_sensors>
-//
-// ─────────────────────────────────────────────────────────────────────────────
+/*
+ * ThermoAdapt Card – v0.6 (dual-mode, polished UI)
+ * ------------------------------------------------------------
+ * Lovelace custom-card providing full control of ThermoAdapt zones.
+ * © 2025 Marcos Sinhoreli – MIT
+ */
 
-import { css, html, LitElement, TemplateResult } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { css, html, LitElement, TemplateResult } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
 import {
   HomeAssistant,
-  hasConfigOrEntityChanged,
   LovelaceCard,
-} from "custom-card-helpers";
+  hasConfigOrEntityChanged,
+} from 'custom-card-helpers';
 
 interface ThermoAdaptCardConfig {
-  zone: string;                 // "sala", "quarto", …
-  title?: string;               // optional card header
-  temp_in: string;              // sensor entity-id
-  temp_out: string;             // sensor entity-id
-  hum_in?: string;              // optional sensor entity-id
-  hum_out?: string;             // optional sensor entity-id
+  type: string;
+  zone: string;
+  title?: string;
+  temp_in: string;
+  temp_out: string;
+  hum_in?: string;
+  climate_entity?: string;
+  mode_entity?: string;
+  fan_entity?: string;
+  enabled_entity?: string;
+  adaptive_entity?: string;
+  temp_min_entity?: string;
+  temp_max_entity?: string;
+  setpoint_entity?: string;
+  deadband_entity?: string;
+  humid_entity?: string;
 }
 
-@customElement("thermoadapt-card")
-export class ThermoAdaptCard extends LitElement {
+@customElement('thermoadapt-card')
+export class ThermoAdaptCard extends LitElement implements LovelaceCard {
   @property({ attribute: false }) public hass!: HomeAssistant;
-  @property({ attribute: false }) private _config!: ThermoAdaptCardConfig;
+  @state() private _cfg!: ThermoAdaptCardConfig;
 
-  // Internal cache (avoid recomputation on tiny hass updates)
-  @state() private _enabled = false;
-  @state() private _adaptive = false;
-
-  // ────────────────────────────────────────────────────────────────────
-  // Card API
-  // ────────────────────────────────────────────────────────────────────
-  public setConfig(config: ThermoAdaptCardConfig): void {
-    if (!config.zone || !config.temp_in || !config.temp_out) {
-      throw new Error("ThermoAdapt-card: zone, temp_in and temp_out are required");
+  /* ─────────────────────────── CONFIG ─────────────────────────── */
+  public setConfig(c: ThermoAdaptCardConfig): void {
+    if (!c?.zone || !c.temp_in || !c.temp_out) {
+      throw new Error('zone, temp_in and temp_out are required');
     }
-    this._config = {
-      title: `ThermoAdapt – ${config.zone.charAt(0).toUpperCase() + config.zone.slice(1)}`,
-      ...config,
+    const z = c.zone;
+    this._cfg = {
+      title: `ThermoAdapt – ${z.charAt(0).toUpperCase()}${z.slice(1)}`,
+      enabled_entity: `switch.thermoadapt_${z}_enabled`,
+      adaptive_entity: `input_boolean.thermoadapt_${z}_dinamico`,
+      temp_min_entity: `number.thermoadapt_${z}_temp_min`,
+      temp_max_entity: `number.thermoadapt_${z}_temp_max`,
+      setpoint_entity: `number.thermoadapt_${z}_setpoint`,
+      deadband_entity: `number.thermoadapt_${z}_deadband`,
+      humid_entity: `number.thermoadapt_${z}_humid_max`,
+      type: 'custom:thermoadapt-card',
+      ...c,
     } as ThermoAdaptCardConfig;
   }
 
-  public getCardSize(): number {
-    return 6;
+  public getCardSize() { return 7; }
+  protected shouldUpdate(changed: Map<string, unknown>) {
+    return hasConfigOrEntityChanged(this, changed, false);
   }
 
-  protected shouldUpdate(changedProps: Map<string, unknown>): boolean {
-    return hasConfigOrEntityChanged(this, changedProps, true);
-  }
+  /* ─────────────────────────── HELPERS ────────────────────────── */
+  private _st(id?: string) { return id ? this.hass.states[id] : undefined; }
+  private _num(id?: string) { const s = this._st(id); return s ? Number(s.state) : undefined; }
 
-  // ────────────────────────────────────────────────────────────────────
-  // Render helpers
-  // ────────────────────────────────────────────────────────────────────
-  private _state(id: string): string {
-    return this.hass.states[id]?.state ?? "unavailable";
-  }
-
-  private _number(id: string): number | null {
-    const s = this._state(id);
-    const v = Number(s);
-    return !isNaN(v) ? v : null;
-  }
-
-  // ────────────────────────────────────────────────────────────────────
-  // Lifecycle
-  // ────────────────────────────────────────────────────────────────────
-  protected willUpdate(): void {
-    const z = this._config.zone;
-    this._enabled = this._state(`switch.thermoadapt_${z}_enabled`) === "on";
-    this._adaptive = this._state(`input_boolean.thermoadapt_${z}_dinamico`) === "on";
-  }
-
-  // ────────────────────────────────────────────────────────────────────
-  // Render
-  // ────────────────────────────────────────────────────────────────────
+  /* ─────────────────────────── RENDER ─────────────────────────── */
   protected render(): TemplateResult {
-    if (!this.hass) return html``;
+    if (!this.hass || !this._cfg) return html``;
+    const c = this._cfg;
+    const enabled = this._st(c.enabled_entity)?.state === 'on';
+    const adaptive = this._st(c.adaptive_entity)?.state === 'on';
 
-    const z = this._config.zone;
-    const n = (suf: string) => `number.thermoadapt_${z}_${suf}`;
-
-    // Sensors / current values
-    const tIn  = this._number(this._config.temp_in);
-    const tOut = this._number(this._config.temp_out);
-    const hIn  = this._config.hum_in  ? this._number(this._config.hum_in)  : null;
-    const hOut = this._config.hum_out ? this._number(this._config.hum_out) : null;
-
-    // Slider states
-    const tempMin   = this._number(n("temp_min"));
-    const tempMax   = this._number(n("temp_max"));
-    const setpoint  = this._number(n("setpoint"));
-    const deadband  = this._number(n("deadband"));
-    const humidMax  = this._number(n("humid_max"));
+    const tIn = this._num(c.temp_in);
+    const tOut = this._num(c.temp_out);
+    const rhIn = this._num(c.hum_in);
+    const rhOut = this._num(c.hum_in?.replace('interna', 'externa'));
 
     return html`
-      <ha-card .header=${this._config.title}>
-        <!-- ─── Enable / Adaptive toggles ──────────────────────────── -->
+      <ha-card .header=${c.title}>
         <div class="row toggles">
-          <ha-switch
-            aria-label="Enable"
-            .checked=${this._enabled}
-            @click=${() => this._toggle(`switch.thermoadapt_${z}_enabled`)}
-          ></ha-switch>
-          <span>Controle</span>
-
-          <ha-switch
-            aria-label="Adaptive"
-            .checked=${this._adaptive}
-            @click=${() => this._toggle(`input_boolean.thermoadapt_${z}_dinamico`)}
-          ></ha-switch>
-          <span>Algoritmo</span>
+          ${this._toggle(c.enabled_entity!, 'Controle', enabled)}
+          ${this._toggle(c.adaptive_entity!, 'Algoritmo', adaptive)}
         </div>
 
-        <!-- ─── Parameter section (changes by mode) ────────────────── -->
-        ${this._adaptive
-          ? html`
-              <div class="row sliders">
-                ${this._slider(n("setpoint"), "Set-point Base", setpoint, 18, 30, 0.1)}
-                ${this._slider(n("deadband"), "Dead-band", deadband, 0, 5, 0.1)}
-                ${this._slider(n("humid_max"), "UR Máx", humidMax, 40, 80, 1)}
-              </div>
-            `
-          : html`
-              <div class="row sliders">
-                ${this._slider(n("temp_min"), "Temp Min", tempMin, 16, 30, 0.5)}
-                ${this._slider(n("temp_max"), "Temp Máx", tempMax, 20, 40, 0.5)}
-                ${this._slider(n("setpoint"), "Alvo", setpoint, 18, 30, 0.1)}
-              </div>
-            `}
+        ${adaptive ? this._adaptiveSliders() : this._manualSliders()}
+        ${this._renderSelects()}
 
-        <!-- ─── Live sensors ────────────────────────────────────────── -->
-        <div class="row sensors">
-          ${this._tile("Temp Interna", tIn, "°C")}
-          ${this._tile("Temp Externa", tOut, "°C")}
-          ${hIn !== null ? this._tile("UR Interna", hIn, "%") : ""}
-          ${hOut !== null ? this._tile("UR Externa", hOut, "%") : ""}
+        <div class="grid tiles">
+          ${this._tile('Temp Interna', tIn, '°C')}
+          ${this._tile('Temp Externa', tOut, '°C')}
+          ${rhIn !== undefined ? this._tile('UR Interna', rhIn, '%') : ''}
+          ${rhOut !== undefined ? this._tile('UR Externa', rhOut, '%') : ''}
         </div>
-      </ha-card>
-    `;
+      </ha-card>`;
   }
 
-  // ────────────────────────────────────────────────────────────────────
-  // Helpers – UI widgets
-  // ────────────────────────────────────────────────────────────────────
-  private _slider(eid: string, label: string, value: number | null, min: number, max: number, step: number) {
-    if (value === null) return html``;
-    return html`
-      <div class="slider-block">
-        <span class="lbl">${label}</span>
-        <ha-slider
-          .min=${min}
-          .max=${max}
-          .step=${step}
-          .value=${value}
-          @change=${(ev: Event) =>
-            this.hass.callService("input_number", "set_value", {
-              entity_id: eid,
-              value: (ev.target as HTMLInputElement).value,
-            })}
-        ></ha-slider>
-        <span class="val">${value}</span>
-      </div>
-    `;
+  /* ──────────────── UI fragments ──────────────── */
+  private _toggle(eid: string, lbl: string, on: boolean) {
+    return html`<ha-switch ?checked=${on} @change=${() => this.hass.callService('switch', on ? 'turn_off' : 'turn_on', { entity_id: eid })}></ha-switch><span class="toggle-label">${lbl}</span>`;
   }
 
-  private _tile(label: string, val: number | null, unit: string) {
-    return html`
-      <div class="tile">
-        <span class="tile-label">${label}</span>
-        <span class="tile-val">${val !== null ? val.toFixed(1) : "–"} ${unit}</span>
-      </div>
-    `;
+  private _slider(eid: string, val: number | undefined, lbl: string, unit: string, min: number, max: number, step: number) {
+    return html`<div class="slider"><span>${lbl}</span><ha-slider min=${min} max=${max} step=${step} .value=${val ?? ''} @change=${(e: any) => this.hass.callService('input_number','set_value',{ entity_id: eid, value: Number(e.target.value)})}></ha-slider><b>${val!==undefined?val.toFixed(step<1?1:0):'–'} ${unit}</b></div>`;
   }
 
-  private _toggle(eid: string) {
-    const st = this._state(eid);
-    const svc = eid.startsWith("switch.") ? "switch" : "input_boolean";
-    const action = st === "on" ? "turn_off" : "turn_on";
-    this.hass.callService(svc, action, { entity_id: eid });
+  private _manualSliders() {
+    const c = this._cfg;
+    return html`<div class="grid sliders">${this._slider(c.temp_min_entity!,this._num(c.temp_min_entity),'Temp Min','°C',16,26,0.5)}${this._slider(c.temp_max_entity!,this._num(c.temp_max_entity),'Temp Max','°C',20,40,0.5)}${this._slider(c.setpoint_entity!,this._num(c.setpoint_entity),'Set-point Fix','°C',18,30,0.1)}</div>`;
   }
 
-  // ────────────────────────────────────────────────────────────────────
-  // Styles
-  // ────────────────────────────────────────────────────────────────────
+  private _adaptiveSliders() {
+    const c = this._cfg;
+    const dyn = this._num(`sensor.react_${c.zone}_setpoint_dinamico`);
+    return html`<div class="grid sliders">${this._slider(c.setpoint_entity!,this._num(c.setpoint_entity),'Set-point Base','°C',18,30,0.1)}${this._slider(c.deadband_entity!,this._num(c.deadband_entity),'Dead-band','°C',0,5,0.1)}${this._slider(c.humid_entity!,this._num(c.humid_entity),'UR Máx','%',40,80,1)}</div><div class="dyn"><span>Set-point Dinâmico</span><b>${dyn?.toFixed(1)??'–'} °C</b></div>`;
+  }
+
+  private _tile(lbl: string, v?: number, u='') {
+    return html`<div class="tile"><span>${lbl}</span><b>${v!==undefined?`${v.toFixed(1)} ${u}`:'–'}</b></div>`;
+  }
+
+  private _select(eid: string, lbl: string, st: any) {
+    const opts: string[] = st.attributes.options||[];
+    return html`<ha-select .label=${lbl} .value=${st.state} @selected=${(e:any)=>this.hass.callService('input_select','select_option',{entity_id:eid,option:e.target.value})}>${opts.map(o=>html`<mwc-list-item .value=${o}>${o}</mwc-list-item>`)}</ha-select>`;
+  }
+
+  private _renderSelects() {
+    const { mode_entity, fan_entity } = this._cfg;
+    const m = this._st(mode_entity); const f = this._st(fan_entity);
+    return !m && !f ? html`` : html`<div class="row selects">${m?this._select(mode_entity!,'Modo',m):''}${f?this._select(fan_entity!,'Fan',f):''}</div>`;
+  }
+
+  /* ─────────────────────────── CSS ─────────────────────────── */
   static styles = css`
-    ha-card {
-      padding: 12px 16px 16px;
-      box-sizing: border-box;
-    }
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 8px;
-      align-items: center;
-    }
-    .toggles span {
-      margin-right: 16px;
-      font-weight: 500;
-    }
-    ha-switch {
-      --mdc-theme-secondary: var(--primary-color);
-    }
-    .slider-block {
-      flex: 1 1 120px;
-      min-width: 110px;
-    }
-    .slider-block .lbl {
-      display: block;
-      font-size: 12px;
-      color: var(--secondary-text-color);
-    }
-    ha-slider {
-      width: 100%;
-    }
-    .slider-block .val {
-      font-size: 12px;
-      color: var(--primary-text-color);
-    }
-    .sensors .tile {
-      flex: 1 1 100px;
-      background: var(--card-background-color, #f7f7f7);
-      padding: 8px;
-      border-radius: 8px;
-      text-align: center;
-    }
-    .tile-label {
-      font-size: 11px;
-      color: var(--secondary-text-color);
-    }
-    .tile-val {
-      font-size: 16px;
-      font-weight: 600;
-    }
+    ha-card { padding:18px 20px 22px; box-sizing:border-box; }
+    .row { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+    .toggles { gap:40px; }
+    .toggle-label { font-weight:500; margin-right:8px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px 24px; margin-bottom:16px; }
+    .slider span { font-size:12px; color:var(--secondary-text-color); }
+    .slider b { display:block; margin-top:4px; font-weight:600; text-align:center; }
+    .dyn { text-align:center; margin:8px 0 18px; }
+    .dyn span { color:var(--secondary-text-color); font-size:13px; margin-right:6px; }
+    .dyn b { font-size:20px; font-weight:600; }
+    .tile { text-align:center; }
+    .tile span { display:block; font-size:12px; color:var(--secondary-text-color); }
+    .tile b { font-size:18px; font-weight:600; margin-top:2px; }
+    .selects { gap:24px; margin-bottom:16px; }
+    ha-select { width:120px; }
   `;
-}
-
-declare global {
-  interface HTMLElementTagNameMap {
-    "thermoadapt-card": ThermoAdaptCard;
-  }
 }
