@@ -78,7 +78,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     }
 
     # Ajuste para configuração consolidada
-    await hass.config_entries.async_forward_entry_setup(entry, ["climate"])
+    await hass.config_entries.async_forward_entry_setups(entry, ["climate"])
 
     # Entidades configuradas diretamente via função única
     await async_setup_entry_all(hass, entry, hass.data[DOMAIN].setdefault("async_add_entities", lambda x: None))
