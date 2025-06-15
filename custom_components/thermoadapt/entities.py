@@ -189,11 +189,7 @@ class ThermoAdaptSwitch(RestoreEntity, SwitchEntity):
 
 PLATFORM = __name__.rsplit(".", 1)[-1]  # Detects 'number' or 'switch'
 
-async def async_setup_entry_all(
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        async_add_entities: AddEntitiesCallback,
-) -> None:
+async def async_setup_entry_all(hass, entry, async_add_entities):
     """Setup Number and Switch entities."""
     await async_setup_entry_numbers(hass, entry, async_add_entities)
     await async_setup_entry_switches(hass, entry, async_add_entities)

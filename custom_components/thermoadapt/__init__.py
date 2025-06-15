@@ -54,14 +54,12 @@ CONFIG_SCHEMA = vol.Schema(
 
 # -----------------------------------------------------------------------------
 
-
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Bootstrap namespace when YAML is used."""
     hass.data.setdefault(DOMAIN, {})
     return True
 
-
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass, entry):
     """Handle a Config-Entry created via the UI (Config-Flow)."""
     hass.data.setdefault(DOMAIN, {})
 
@@ -77,9 +75,5 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "unit": unit,
     }
 
-    await async_setup_entry_all(hass, entry, lambda entities: hass.async_create_task(
-        hass.helpers.entity_component.async_add_entities(entities)
-    ))
-
-    _LOGGER.debug("ThermoAdapt zone “%s” initialised (unit %s).", zone, unit)
+    await async_setup_entry_all(hass, entry, async_add_entities)
     return True
