@@ -11,7 +11,6 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN, CONF_NAME
-from .entities import async_setup_entry_all
 
 _LOGGER: Final = logging.getLogger(__name__)
 
@@ -52,18 +51,16 @@ CONFIG_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
-# -----------------------------------------------------------------------------
-
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Bootstrap namespace when YAML is used."""
     hass.data.setdefault(DOMAIN, {})
     return True
 
-async def async_setup_entry(hass, entry):
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Handle a Config-Entry created via the UI (Config-Flow)."""
     hass.data.setdefault(DOMAIN, {})
 
-    cfg: dict[str, any] = entry.data
+    cfg: dict[str, Any] = entry.data
     zone: str = cfg[CONF_NAME]
 
     use_fahrenheit = cfg.get("use_fahrenheit", False)
@@ -75,5 +72,5 @@ async def async_setup_entry(hass, entry):
         "unit": unit,
     }
 
-    await async_setup_entry_all(hass, entry, async_add_entities)
+    await hass.config_entries.async_forward_entry_setups(entry, ["climate", "number", "switch"])
     return True
