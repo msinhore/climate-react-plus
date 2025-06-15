@@ -20,10 +20,13 @@ class ThermoAdaptCoordinator(DataUpdateCoordinator):
     """Coordena atualizações do ponto de ajuste (setpoint) adaptativo."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry, params: ComfortParams) -> None:
+        zone = entry.data[CONF_NAME]
+        zone_clean = zone.replace("thermoadapt_", "")
+        
         super().__init__(
             hass,
             _LOGGER,
-            name=f"thermoadapt_{entry.data[CONF_NAME]}",
+            name=f"thermoadapt_{zone_clean}",
             update_interval=SCAN_INTERVAL,
         )
         self.entry = entry
@@ -63,7 +66,8 @@ class ThermoAdaptClimate(ClimateEntity):
         self.entry = entry
         self.coordinator = coordinator
         self._zone = entry.data[CONF_NAME]
-
+        self._enable_switch = f"switch.thermoadapt_{self._zone}_enabled"
+        
         self._attr_name = f"ThermoAdapt {self._zone.capitalize()}"
         self._attr_unique_id = f"thermoadapt_{self._zone}"
         self._attr_hvac_modes = [HVACMode.OFF, HVACMode.COOL, HVACMode.HEAT, HVACMode.DRY]
