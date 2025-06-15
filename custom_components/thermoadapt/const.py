@@ -5,6 +5,8 @@ from __future__ import annotations
 # -----------------------------------------------------------------------------
 DOMAIN: str = "thermoadapt"
 
+CONF_NAME = "name"
+
 # Config-flow keys (UI)
 CONF_TEMP_IN:        str = "temp_in"
 CONF_HUM_IN:         str = "hum_in"
