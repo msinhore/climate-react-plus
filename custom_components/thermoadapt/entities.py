@@ -11,10 +11,31 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from dataclasses import dataclass
 
 from .const import DOMAIN
 
 _LOGGER: Final = logging.getLogger(__name__)
+
+@dataclass
+class ComfortParams:
+    tc_base: float
+    tc_min: float
+    th_base: float
+    k_heat: float
+    deadband_cool: float
+    deadband_heat: float
+    humid_max: int
+    ua_total: float
+    q_int: float
+
+def tset_cool(t_out: float, p: ComfortParams) -> float:
+    """Cooling set-point as a linear function of outdoor temperature."""
+    return p.tc_base - p.k_heat * (t_out - p.tc_base)
+
+def tset_heat(t_out: float, p: ComfortParams) -> float:
+    """Heating set-point as a linear function of outdoor temperature."""
+    return p.th_base + p.k_heat * (p.th_base - t_out)
 
 # -----------------------------------------------------------------------------
 # Configurable parameters
