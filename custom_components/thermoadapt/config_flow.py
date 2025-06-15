@@ -1,13 +1,3 @@
-"""ThermoAdapt – Config-Flow (UI wizard) and Options-Flow
-
-Compact version – no external dependencies (only stdlib + Home Assistant).
-Collects:
-  • Zone name, sensors, AC (and optional TRV)
-  • Comfort parameters (min/max T, dead-band, etc.)
-Stores comfort sliders in *entry.options* so they are editable later.  Helpers
-(number / switch) are created on-the-fly via `ensure_helpers()`.
-"""
-
 from __future__ import annotations
 
 import logging
@@ -26,9 +16,9 @@ from .const import (
     CONF_HUM_IN,
     CONF_CLIMATE_ENTITY,
     CONF_TRV_ENTITY,
-    HELPER_SUFFIXES,
+
 )
-from .helpers import ensure_helpers  # util inside the same component
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -103,7 +93,6 @@ class ThermoAdaptConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Merge and create helpers
         self._data.update(user_input)
-        await ensure_helpers(self.hass, self._data[CONF_NAME])
 
         return self.async_create_entry(title=self._data[CONF_NAME], data=self._data, options=user_input)
 

@@ -1,10 +1,3 @@
-"""ThermoAdapt – Constants and defaults
-
-This file centralises identifiers that are used across the custom component so
-we avoid string-litter throughout the code-base.  Terms match the original
-Dear & Brager papers (e.g. *dead-band*, *k_heat*, *UA*, *Q_int*).
-"""
-
 from __future__ import annotations
 
 # -----------------------------------------------------------------------------
@@ -27,19 +20,6 @@ DEF_DEADBAND:   float = 0.5   # °C – neutral zone before switching
 DEF_HUMID_MAX:  int   = 65    # %  – triggers *dry* mode above this
 DEF_HEAT_BASE:  float = 20.5  # °C – T_base for heating curve
 DEF_K_HEAT:     float = 0.18  # slope for adaptive heating (Dear & Brager 2001)
-
-# Helper suffixes used to auto-generate numbers / switches
-HELPER_SUFFIXES = [
-    "temp_min",
-    "temp_max",
-    "setpoint",
-    "deadband",
-    "humid_max",
-    "heat_base",
-    "k_heat",
-    "adaptive",
-    "enabled", 
-]
 
 # Update interval for coordinator
 SCAN_INTERVAL_SEC: int = 30
