@@ -10,7 +10,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN
+from .const import DOMAIN, CONF_NAME
 from .entities import async_setup_entry_all
 
 _LOGGER: Final = logging.getLogger(__name__)
@@ -63,10 +63,9 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Handle a Config-Entry created via the UI (Config-Flow)."""
-
     hass.data.setdefault(DOMAIN, {})
 
-    cfg: dict[str, Any] = entry.data
+    cfg: dict[str, any] = entry.data
     zone: str = cfg[CONF_NAME]
 
     use_fahrenheit = cfg.get("use_fahrenheit", False)
@@ -78,8 +77,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "unit": unit,
     }
 
-    # Ajuste para configuração consolidada.
-    await hass.config_entries.async_forward_entry_setups(entry, ["climate", "number", "switch"])
+    await async_setup_entry_all(hass, entry, lambda entities: hass.async_create_task(
+        hass.helpers.entity_component.async_add_entities(entities)
+    ))
 
     _LOGGER.debug("ThermoAdapt zone “%s” initialised (unit %s).", zone, unit)
     return True
