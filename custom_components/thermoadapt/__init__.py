@@ -11,7 +11,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
 from .const import DOMAIN
-from .entities import async_setup_entry_numbers, async_setup_entry_switches
+rom .entities import async_setup_entry_all
 
 _LOGGER: Final = logging.getLogger(__name__)
 
@@ -60,7 +60,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.data.setdefault(DOMAIN, {})
     return True
 
-
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Handle a Config-Entry created via the UI (Config-Flow)."""
 
@@ -70,17 +69,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     zone: str = cfg[CONF_NAME]
 
     use_fahrenheit = cfg.get("use_fahrenheit", False)
-    unit = "°F" if use_fahrenheit else "°C"  # display-only (helpers / card)
+    unit = "°F" if use_fahrenheit else "°C"
 
-    # Persist runtime context for the zone so every platform can read it
     hass.data[DOMAIN][zone] = {
         "zone": zone,
         "config": cfg,
         "unit": unit,
     }
 
-    # Setup all platforms (number, switch, climate)
-    await hass.config_entries.async_forward_entry_setups(entry, ["climate", "number", "switch"])
+    # Ajuste para configuração consolidada
+    await hass.config_entries.async_forward_entry_setup(entry, "climate")
+
+    # Entidades configuradas diretamente via função única
+    await async_setup_entry_all(hass, entry, hass.data[DOMAIN].setdefault("async_add_entities", lambda x: None))
 
     _LOGGER.debug("ThermoAdapt zone “%s” initialised (unit %s).", zone, unit)
     return True
